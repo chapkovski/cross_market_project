@@ -26,12 +26,8 @@
         {% csrf_token %}
 
         <script>
-            window.starting_price = {{ subsession.starting_price|json }};
+            window.merged = {{ subsession.merged|json }};
             window.tick_frequency = {{ subsession.tick_frequency|json }};
-            window.max_length = {{ subsession.max_length|json }};
-
-            window.gamified = {{ player.gamified|json }};
-            window.training ={{ player.training|json }};
             window.socket_path = {{ view.live_url|json }};
             window.crash_probability = {{ player.crash_probability|json }};
 

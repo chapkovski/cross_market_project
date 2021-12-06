@@ -4,7 +4,7 @@ from .models import Constants
 
 
 class MyPage(Page):
-    pass
+    live_method = 'register_event'
 
 
 class ResultsWaitPage(WaitPage):
