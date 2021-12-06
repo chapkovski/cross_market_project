@@ -1,12 +1,20 @@
 from os import environ
 
 SESSION_CONFIGS = [
-    # dict(
-    #    name='public_goods',
-    #    display_name="Public Goods",
-    #    num_demo_participants=3,
-    #    app_sequence=['public_goods', 'payment_info']
-    # ),
+    dict(
+        name='market_disjoint',
+        display_name="market disjoint",
+        num_demo_participants=3,
+        app_sequence=['main'],
+        merged=False
+    ),
+    dict(
+        name='market_merged',
+        display_name="market merged",
+        num_demo_participants=3,
+        app_sequence=['main'],
+        merged=True
+    ),
 ]
 
 # if you set a property in SESSION_CONFIG_DEFAULTS, it will be inherited by all configs

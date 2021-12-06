@@ -1,0 +1,3 @@
+[submodule "crossmarket"]
+	path = crossmarket
+	url = https://github.com/chapkovski/crossmarket.git

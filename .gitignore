@@ -11,3 +11,7 @@ __pycache__/
 *.py[cod]
 .DS_Store
 *.otreezip
+*hot-update.js
+*hot-update.json
+_static/front/*hot-update.js
+_static/front/*.hot-update.json
