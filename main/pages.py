@@ -1,7 +1,11 @@
 from otree.api import Currency as c, currency_range
 from ._builtin import Page, WaitPage
 from .models import Constants
-
+class FirstWP(WaitPage):
+    def is_displayed(self):
+        return self.round_number == 1
+    group_by_arrival_time = True
+    after_all_players_arrive = 'set_group_params'
 
 class MyPage(Page):
     live_method = 'register_event'
@@ -16,4 +20,6 @@ class Results(Page):
     pass
 
 
-page_sequence = [MyPage, ResultsWaitPage, Results]
+page_sequence = [
+    FirstWP,
+    MyPage, ResultsWaitPage, Results]

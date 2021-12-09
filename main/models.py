@@ -32,6 +32,11 @@ class Subsession(BaseSubsession):
     tick_frequency = models.IntegerField()
     merged = models.IntegerField()
 
+    def group_by_arrival_time_method(self, waiting_players):
+        group_size = self.session.config.get('group_size')
+        if len(waiting_players) >= group_size:
+            return waiting_players[:group_size]
+
     def creating_session(self):
         self.tick_frequency = Constants.tick_frequency  # TODO: move to session config later on
         self.merged = int(self.session.config.get('merged', False))
@@ -50,33 +55,36 @@ class Subsession(BaseSubsession):
             p.stock_value_A = starting_price_A * initial_shares_A
             p.stock_value_B = starting_price_B * initial_shares_B
 
-        bids = []
-        for g in self.get_groups():
-            # g.history.create(value=starting_price_A, market='A')
-            # g.history.create(value=starting_price_B, market='B')
-            g.price_A = starting_price_A
-            g.price_B = starting_price_B
-            for i in range(20):
-                b = Bid(group=g,
-                        trader=random.choice(g.get_players()),
-                        market=random.choice(['A', 'B']),
-                        value=random.randint(100, 200),
-                        type=random.choice(['sell', 'buy']),
-                        active=True,
-                        timestamp=timezone.now())
-                bids.append(b)
-        Bid.objects.bulk_create(bids)
-
 
 class Group(BaseGroup):
     price_A = models.FloatField()
     price_B = models.FloatField()
 
+    def set_group_params(self):
+        bids = []
+        c = self.session.config
+        starting_price_A = c.get('starting_price_A', 0)
+        starting_price_B = c.get('starting_price_B', 0)
+        # g.history.create(value=starting_price_A, market='A')
+        # g.history.create(value=starting_price_B, market='B')
+        self.price_A = starting_price_A
+        self.price_B = starting_price_B
+        for i in range(20):
+            b = Bid(group=self,
+                    trader=random.choice(self.get_players()),
+                    market=random.choice(['A', 'B']),
+                    value=random.randint(100, 200),
+                    type=random.choice(['sell', 'buy']),
+                    active=True,
+                    timestamp=timezone.now())
+            bids.append(b)
+        Bid.objects.bulk_create(bids)
+
     def get_full_history(self):
         hs = self.history.all()
 
-        return dict(A=list(hs.filter(market='A').values_list( 'time_in_millisecs','value',)),
-                    B=list(hs.filter(market='B').values_list( 'time_in_millisecs','value',)))
+        return dict(A=list(hs.filter(market='A').values_list('time_in_millisecs', 'value', )),
+                    B=list(hs.filter(market='B').values_list('time_in_millisecs', 'value', )))
 
     def price_update(self, new_price, market):
         setattr(self, f'price_{market}', new_price)
@@ -143,9 +151,10 @@ class Player(BasePlayer):
         b.trader.update_status(b)
         self.update_status(b)
         h = History(group=self.group, bid=b, value=b.value, market=b.market, timestamp=b.closure_timestamp,
-                    time_in_millisecs=b.closure_timestamp.timestamp()*1000)
+                    time_in_millisecs=b.closure_timestamp.timestamp() * 1000)
         h.save()
-        msg_to_everyone = dict(action='removeBid', bid_id=bid_id, market=b.market, price=b.value, history_time=h.time_in_millisecs)
+        msg_to_everyone = dict(action='removeBid', bid_id=bid_id, market=b.market, price=b.value,
+                               history_time=h.time_in_millisecs)
         msg_to_trader = dict(action='remove_and_update', bid_id=bid_id, status=b.trader.current_status(),
                              market=b.market, price=b.value, history_time=h.time_in_millisecs)
         msg_to_contractor = dict(action='remove_and_update', bid_id=bid_id, status=self.current_status(),

@@ -30,6 +30,7 @@ SESSION_CONFIG_DEFAULTS = dict(
     initial_money_B=250,
     starting_price_A=100,
     starting_price_B=100,
+    group_size=3,
 )
 
 # ISO-639 code
