@@ -52,6 +52,8 @@ class Subsession(BaseSubsession):
 
         bids = []
         for g in self.get_groups():
+            g.history.create(value=starting_price_A, market='A')
+            g.history.create(value=starting_price_B, market='B')
             g.price_A = starting_price_A
             g.price_B = starting_price_B
             for i in range(20):
@@ -69,9 +71,14 @@ class Subsession(BaseSubsession):
 class Group(BaseGroup):
     price_A = models.FloatField()
     price_B = models.FloatField()
+    def get_full_history(self):
+        hs = self.history.all()
 
+        return dict(A=list(hs.filter(market='A').values_list('value', flat=True)),
+                    B=list(hs.filter(market='B').values_list('value', flat=True)))
     def price_update(self, new_price, market):
         setattr(self, f'price_{market}', new_price)
+
 
 class Player(BasePlayer):
     cash_A = models.FloatField()
@@ -133,6 +140,8 @@ class Player(BasePlayer):
         self.group.price_update(new_price=b.value, market=b.market)
         b.trader.update_status(b)
         self.update_status(b)
+        h = History(group=self.group, bid=b, value=b.value, market=b.market, timestamp=b.closure_timestamp)
+        h.save()
         msg_to_everyone = dict(action='removeBid', bid_id=bid_id, market=b.market, price=b.value)
         msg_to_trader = dict(action='remove_and_update', bid_id=bid_id, status=b.trader.current_status(),
                              market=b.market, price=b.value)
@@ -144,7 +153,7 @@ class Player(BasePlayer):
         return {**res, self.id_in_group: msg_to_contractor, b.trader.id_in_group: msg_to_trader}
 
     def update_status(self, bid):
-
+        # TODO: clean this BS
         # we get here a closed bid. We update repository and cash.
         if (bid.trader == self and bid.type == 'sell') or (bid.contractor == self and bid.type == 'buy'):
             # That means we just sold an item
@@ -198,3 +207,15 @@ class Bid(djmodels.Model):
     timestamp = djmodels.DateTimeField(null=True)
     closure_timestamp = djmodels.DateTimeField(null=True)
     active = models.BooleanField()
+
+
+class History(djmodels.Model):
+    def as_dict(self):
+        return dict(value=self.bid.value, market=self.bid.market,
+                    id=self.id, group_id=self.group.id)
+    group = djmodels.ForeignKey(to=Group, on_delete=djmodels.CASCADE, related_name='history')
+    bid = djmodels.OneToOneField(to=Bid, on_delete=djmodels.CASCADE, related_name='h', null=True)
+    market = models.StringField()
+    value = models.FloatField()
+    timestamp = djmodels.DateTimeField(null=True)
+
