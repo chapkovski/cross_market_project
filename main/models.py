@@ -52,8 +52,8 @@ class Subsession(BaseSubsession):
 
         bids = []
         for g in self.get_groups():
-            g.history.create(value=starting_price_A, market='A')
-            g.history.create(value=starting_price_B, market='B')
+            # g.history.create(value=starting_price_A, market='A')
+            # g.history.create(value=starting_price_B, market='B')
             g.price_A = starting_price_A
             g.price_B = starting_price_B
             for i in range(20):
@@ -71,11 +71,13 @@ class Subsession(BaseSubsession):
 class Group(BaseGroup):
     price_A = models.FloatField()
     price_B = models.FloatField()
+
     def get_full_history(self):
         hs = self.history.all()
 
-        return dict(A=list(hs.filter(market='A').values_list('value', flat=True)),
-                    B=list(hs.filter(market='B').values_list('value', flat=True)))
+        return dict(A=list(hs.filter(market='A').values_list( 'time_in_millisecs','value',)),
+                    B=list(hs.filter(market='B').values_list( 'time_in_millisecs','value',)))
+
     def price_update(self, new_price, market):
         setattr(self, f'price_{market}', new_price)
 
@@ -140,13 +142,14 @@ class Player(BasePlayer):
         self.group.price_update(new_price=b.value, market=b.market)
         b.trader.update_status(b)
         self.update_status(b)
-        h = History(group=self.group, bid=b, value=b.value, market=b.market, timestamp=b.closure_timestamp)
+        h = History(group=self.group, bid=b, value=b.value, market=b.market, timestamp=b.closure_timestamp,
+                    time_in_millisecs=b.closure_timestamp.timestamp()*1000)
         h.save()
-        msg_to_everyone = dict(action='removeBid', bid_id=bid_id, market=b.market, price=b.value)
+        msg_to_everyone = dict(action='removeBid', bid_id=bid_id, market=b.market, price=b.value, history_time=h.time_in_millisecs)
         msg_to_trader = dict(action='remove_and_update', bid_id=bid_id, status=b.trader.current_status(),
-                             market=b.market, price=b.value)
+                             market=b.market, price=b.value, history_time=h.time_in_millisecs)
         msg_to_contractor = dict(action='remove_and_update', bid_id=bid_id, status=self.current_status(),
-                                 market=b.market, price=b.value)
+                                 market=b.market, price=b.value, history_time=h.time_in_millisecs)
         all_others = [i.id_in_group for i in self.get_others_in_group() if i != b.trader]
         res = {i: msg_to_everyone for i in all_others}
 
@@ -213,9 +216,10 @@ class History(djmodels.Model):
     def as_dict(self):
         return dict(value=self.bid.value, market=self.bid.market,
                     id=self.id, group_id=self.group.id)
+
     group = djmodels.ForeignKey(to=Group, on_delete=djmodels.CASCADE, related_name='history')
     bid = djmodels.OneToOneField(to=Bid, on_delete=djmodels.CASCADE, related_name='h', null=True)
     market = models.StringField()
     value = models.FloatField()
     timestamp = djmodels.DateTimeField(null=True)
-
+    time_in_millisecs = models.FloatField()
