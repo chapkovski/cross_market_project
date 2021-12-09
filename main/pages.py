@@ -5,7 +5,8 @@ from .models import Constants
 
 class MyPage(Page):
     live_method = 'register_event'
-
+    def js_vars(self):
+        return dict(status=self.player.current_status())
 
 class ResultsWaitPage(WaitPage):
     pass
