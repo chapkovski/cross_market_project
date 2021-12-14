@@ -7,3 +7,4 @@ MarkupSafe
 django_user_agents
 django-localflavor==3.1
 django-dotenv
+huey
