@@ -50,4 +50,13 @@ DEMO_PAGE_INTRO_HTML = """ """
 SECRET_KEY = '@zp663)siip88aobjn01c4zs6)ev9h4j5jt@kbrke4!fdp^q15'
 
 # if an app is included in SESSION_CONFIGS, you don't need to list it here
-INSTALLED_APPS = ['otree']
+INSTALLED_APPS = ['otree',
+                  'huey.contrib.djhuey',
+                  ]
+from huey  import SqliteHuey
+HUEY = SqliteHuey('db.sqlite3')
+# HUEY = {
+#     'huey_class': 'huey.SqliteHuey',
+#     'immediate_use_memory': False,
+#     "immediate": False
+# }

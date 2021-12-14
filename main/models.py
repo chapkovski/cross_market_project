@@ -8,11 +8,14 @@ from otree.api import (
     Currency as c,
     currency_range,
 )
+from .tasks import handle_update
+
 import random
 from django.db import models as djmodels
 from django.utils import timezone
 from django.core import serializers
 from pprint import pprint
+from datetime import datetime, timedelta
 
 author = 'Philipp Chapkovski, HSE'
 
@@ -38,6 +41,11 @@ class Subsession(BaseSubsession):
             return waiting_players[:group_size]
 
     def creating_session(self):
+
+        for p in self.get_players():
+            eta = datetime.now() + timedelta(seconds=10)
+            h = handle_update.schedule((p,), eta=eta)
+            h()
         self.tick_frequency = Constants.tick_frequency  # TODO: move to session config later on
         self.merged = int(self.session.config.get('merged', False))
         c = self.session.config
@@ -69,16 +77,16 @@ class Group(BaseGroup):
         # g.history.create(value=starting_price_B, market='B')
         self.price_A = starting_price_A
         self.price_B = starting_price_B
-        for i in range(20):
-            b = Bid(group=self,
-                    trader=random.choice(self.get_players()),
-                    market=random.choice(['A', 'B']),
-                    value=random.randint(100, 200),
-                    type=random.choice(['sell', 'buy']),
-                    active=True,
-                    timestamp=timezone.now())
-            bids.append(b)
-        Bid.objects.bulk_create(bids)
+        # for i in range(20):
+        #     b = Bid(group=self,
+        #             trader=random.choice(self.get_players()),
+        #             market=random.choice(['A', 'B']),
+        #             value=random.randint(100, 200),
+        #             type=random.choice(['sell', 'buy']),
+        #             active=True,
+        #             timestamp=timezone.now())
+        #     bids.append(b)
+        # Bid.objects.bulk_create(bids)
 
     def get_full_history(self):
         hs = self.history.all()
@@ -91,6 +99,7 @@ class Group(BaseGroup):
 
 
 class Player(BasePlayer):
+    huey_val = models.IntegerField(initial=0)
     cash_A = models.FloatField()
     cash_B = models.FloatField()
     shares_A = models.FloatField()
@@ -131,14 +140,54 @@ class Player(BasePlayer):
         b = self.total_in_market('B')
         return a + b
 
+    def inner_cancel_bid(self, data, timestamp):
+        market = data.get('market')
+        bid_type = data.get('type')
+        bids = self.bids.filter(market=market, active=True, type=bid_type)
+        if bids.exists():
+            b = bids.first()
+            b.contractor = self
+            b.active = False
+            b.closure_timestamp = timestamp
+            b.save()
+            return b.id
+
     def addBid(self, data, timestamp):
+        bid_type = data.get('type')
+        value = data.get('value')
+        counterparts = None
+        if bid_type == 'sell':
+            counterparts = self.group.bids.filter(type='buy', active=True, value__gte=value)
+        if bid_type == 'buy':
+            counterparts = self.group.bids.filter(type='sell', active=True, value__lte=value)
+        if counterparts and counterparts.exists():
+            counterpart = counterparts.first()
+            data['bid_id'] = counterpart.id
+            return self.takeBid(data, timestamp)
+        removal_info = dict(bid_to_remove=self.inner_cancel_bid(data, timestamp))
         injector = data.copy()
         injector.pop('action')
         injector.pop('trader_id')
         b = Bid(trader=self, group=self.group, timestamp=timestamp, active=True,
                 **injector)
         b.save()
-        return {0: dict(action='addBid', bid=b.as_dict())}
+        return {0: dict(action='addBid', bid=b.as_dict(), **removal_info)}
+
+    def clearing_market(self):
+
+        pass
+
+    def cancelBid(self, data, timestamp):
+        market = data.get('market')
+        bids = self.bids.filter(market=market, active=True)
+        if bids.exists():
+            b = bids.first()
+            b.contractor = self
+            b.active = False
+            b.closure_timestamp = timestamp
+            b.save()
+            msg_to_everyone = dict(action='removeBid', bid_id=b.id)
+            return {0: msg_to_everyone}
 
     def takeBid(self, data, timestamp):
         bid_id = data.get('bid_id')
