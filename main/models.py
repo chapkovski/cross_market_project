@@ -180,7 +180,8 @@ class Player(BasePlayer):
 
     def cancelBid(self, data, timestamp):
         market = data.get('market')
-        bids = self.bids.filter(market=market, active=True)
+        bid_type = data.get('type')
+        bids = self.bids.filter(market=market, active=True, type=bid_type)
         if bids.exists():
             b = bids.first()
             b.contractor = self
