@@ -155,11 +155,12 @@ class Player(BasePlayer):
     def addBid(self, data, timestamp):
         bid_type = data.get('type')
         value = data.get('value')
+        market = data.get('market')
         counterparts = None
         if bid_type == 'sell':
-            counterparts = self.group.bids.filter(type='buy', active=True, value__gte=value)
+            counterparts = self.group.bids.filter(type='buy', active=True, value__gte=value, market=market)
         if bid_type == 'buy':
-            counterparts = self.group.bids.filter(type='sell', active=True, value__lte=value)
+            counterparts = self.group.bids.filter(type='sell', active=True, value__lte=value,market=market)
         if counterparts and counterparts.exists():
             counterpart = counterparts.first()
             data['bid_id'] = counterpart.id
