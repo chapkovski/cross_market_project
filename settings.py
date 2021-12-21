@@ -31,6 +31,7 @@ SESSION_CONFIG_DEFAULTS = dict(
     starting_price_A=100,
     starting_price_B=100,
     group_size=3,
+    day_length=150,
 )
 
 # ISO-639 code
@@ -53,7 +54,8 @@ SECRET_KEY = '@zp663)siip88aobjn01c4zs6)ev9h4j5jt@kbrke4!fdp^q15'
 INSTALLED_APPS = ['otree',
                   'huey.contrib.djhuey',
                   ]
-from huey  import SqliteHuey
+from huey import SqliteHuey
+
 HUEY = SqliteHuey('db.sqlite3')
 # HUEY = {
 #     'huey_class': 'huey.SqliteHuey',

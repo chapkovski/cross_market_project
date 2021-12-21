@@ -67,26 +67,22 @@ class Subsession(BaseSubsession):
 class Group(BaseGroup):
     price_A = models.FloatField()
     price_B = models.FloatField()
+    starting_time = djmodels.DateTimeField(null=True)
+    finish_time = djmodels.DateTimeField(null=True)
+
+    @property
+    def time_left(self):
+        return (self.finish_time - timezone.now()).total_seconds()
 
     def set_group_params(self):
-        bids = []
         c = self.session.config
+        day_length = c.get('day_length', 300)
         starting_price_A = c.get('starting_price_A', 0)
         starting_price_B = c.get('starting_price_B', 0)
-        # g.history.create(value=starting_price_A, market='A')
-        # g.history.create(value=starting_price_B, market='B')
         self.price_A = starting_price_A
         self.price_B = starting_price_B
-        # for i in range(20):
-        #     b = Bid(group=self,
-        #             trader=random.choice(self.get_players()),
-        #             market=random.choice(['A', 'B']),
-        #             value=random.randint(100, 200),
-        #             type=random.choice(['sell', 'buy']),
-        #             active=True,
-        #             timestamp=timezone.now())
-        #     bids.append(b)
-        # Bid.objects.bulk_create(bids)
+        self.starting_time = timezone.now()
+        self.finish_time = timezone.now() + timedelta(seconds=day_length)
 
     def get_full_history(self):
         hs = self.history.all()
@@ -160,7 +156,7 @@ class Player(BasePlayer):
         if bid_type == 'sell':
             counterparts = self.group.bids.filter(type='buy', active=True, value__gte=value, market=market)
         if bid_type == 'buy':
-            counterparts = self.group.bids.filter(type='sell', active=True, value__lte=value,market=market)
+            counterparts = self.group.bids.filter(type='sell', active=True, value__lte=value, market=market)
         if counterparts and counterparts.exists():
             counterpart = counterparts.first()
             data['bid_id'] = counterpart.id

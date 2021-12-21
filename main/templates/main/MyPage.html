@@ -41,6 +41,11 @@
             window.tick_frequency = {{ subsession.tick_frequency|json }};
             window.socket_path = {{ view.live_url|json }};
             window.player_id ={{ player.id|json }};
+            window.gameParams = {
+                dayLength: {{ group.time_left|json}},
+                SEC: 1000
+            }
+
             const window_history ={{ group.get_full_history|json }};
 
             const status = {{ player.current_status|safe }};
