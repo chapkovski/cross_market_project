@@ -9,7 +9,7 @@ from otree.api import (
     currency_range,
 )
 from .tasks import handle_update
-
+import json
 import random
 from django.db import models as djmodels
 from django.utils import timezone
@@ -31,9 +31,16 @@ class Constants(BaseConstants):
     tick_frequency = 5
 
 
+conv = lambda x: [float(i.strip()) for i in x.split(',')]
+
+
 class Subsession(BaseSubsession):
     tick_frequency = models.IntegerField()
     merged = models.IntegerField()
+    terminal_A = models.FloatField()
+    terminal_B = models.FloatField()
+    dividends_A = models.StringField()
+    dividends_B = models.StringField()
 
     def group_by_arrival_time_method(self, waiting_players):
         group_size = self.session.config.get('group_size')
@@ -41,14 +48,23 @@ class Subsession(BaseSubsession):
             return waiting_players[:group_size]
 
     def creating_session(self):
+        c = self.session.config
+        self.terminal_A = c.get('terminal_A')
+        self.terminal_B = c.get('terminal_B')
 
+        dividends_A = conv(c.get('dividends_A'))
+        dividends_B = conv(c.get('dividends_A'))
+        self.session.vars['dividends_A'] = dividends_A
+        self.session.vars['dividends_B'] = dividends_B
+        self.dividends_A = json.dumps(dividends_A)
+        self.dividends_B = json.dumps(dividends_B)
         for p in self.get_players():
             eta = datetime.now() + timedelta(seconds=10)
             h = handle_update.schedule((p,), eta=eta)
             h()
         self.tick_frequency = Constants.tick_frequency  # TODO: move to session config later on
         self.merged = int(self.session.config.get('merged', False))
-        c = self.session.config
+
         starting_price_A = c.get('starting_price_A', 0)
         starting_price_B = c.get('starting_price_B', 0)
         initial_shares_A = c.get('initial_shares_A', 0)
@@ -65,6 +81,8 @@ class Subsession(BaseSubsession):
 
 
 class Group(BaseGroup):
+    dividend_A = models.FloatField()
+    dividend_B = models.FloatField()
     price_A = models.FloatField()
     price_B = models.FloatField()
     starting_time = djmodels.DateTimeField(null=True)
@@ -83,6 +101,8 @@ class Group(BaseGroup):
         self.price_B = starting_price_B
         self.starting_time = timezone.now()
         self.finish_time = timezone.now() + timedelta(seconds=day_length)
+        self.dividend_A = random.choice(self.session.vars.get('dividends_A'))
+        self.dividend_B = random.choice(self.session.vars.get('dividends_B'))
 
     def get_full_history(self):
         hs = self.history.all()
@@ -109,12 +129,16 @@ class Player(BasePlayer):
                    cash=self.cash_A,
                    stock_value=self.stock_value_A,
                    price=self.group.price_A,
-                   total=self.total_in_market('A'), ),
+                   total=self.total_in_market('A'),
+                   terminal_value=self.subsession.terminal_A,
+                   dividend=self.group.dividend_A),
             B=dict(shares=self.shares_B,
                    cash=self.cash_B,
                    stock_value=self.stock_value_B,
                    price=self.group.price_B,
-                   total=self.total_in_market('B'), ),
+                   total=self.total_in_market('B'),
+                   terminal_value=self.subsession.terminal_B,
+                   dividend=self.group.dividend_B),
             total=dict(stock_value=self.total_stock_value(),
                        cash=self.total_cash(),
                        total=self.total())
