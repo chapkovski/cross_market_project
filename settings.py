@@ -62,16 +62,21 @@ INSTALLED_APPS = ['otree',
                   'huey.contrib.djhuey',
                   ]
 
-
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
 
     },
 }
+from huey import RedisHuey
+
 REDIS_URL = os.environ.get('REDIS_URL')
 if REDIS_URL:
-    HUEY = {'huey_class': 'huey.RedisHuey',  'url': REDIS_URL}
-    CHANNEL_LAYERS['default'][ "CONFIG"]= {
-            "hosts": [REDIS_URL],
-        }
+    HUEY = {'huey_class': 'huey.RedisHuey',
+            'connection': {
+                'url': REDIS_URL,  # Allow Redis config via a DSN.
+            },
+            }
+    CHANNEL_LAYERS['default']["CONFIG"] = {
+        "hosts": [REDIS_URL],
+    }
