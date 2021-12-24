@@ -71,6 +71,7 @@ CHANNEL_LAYERS = {
 }
 REDIS_URL = os.environ.get('REDIS_URL')
 if REDIS_URL:
+    HUEY = {'huey_class': 'huey.RedisHuey',  'url': REDIS_URL}
     CHANNEL_LAYERS['default'][ "CONFIG"]= {
             "hosts": [REDIS_URL],
         }
