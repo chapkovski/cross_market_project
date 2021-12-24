@@ -72,7 +72,8 @@ from huey import RedisHuey
 
 REDIS_URL = os.environ.get('REDIS_URL')
 if REDIS_URL:
-    HUEY = {'connection': {'url': REDIS_URL}}
+    HUEY = {'connection': {'url': REDIS_URL},
+            'immediate':False}
     CHANNEL_LAYERS['default']["CONFIG"] = {
         "hosts": [REDIS_URL],
     }
