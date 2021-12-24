@@ -69,11 +69,13 @@ CHANNEL_LAYERS = {
     },
 }
 from huey import RedisHuey
-
+from redis import ConnectionPool
 REDIS_URL = os.environ.get('REDIS_URL')
 if REDIS_URL:
-    HUEY = {'connection': {'url': REDIS_URL},
-            'immediate':False}
+    pool = ConnectionPool.from_url(url=REDIS_URL)
+    HUEY = RedisHuey('my-app', connection_pool=pool)
+    # HUEY = {'connection': {'url': REDIS_URL},
+    #         'immediate':False}
     CHANNEL_LAYERS['default']["CONFIG"] = {
         "hosts": [REDIS_URL],
     }
