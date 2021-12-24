@@ -64,9 +64,6 @@ class Subsession(BaseSubsession):
             h()
         self.tick_frequency = Constants.tick_frequency  # TODO: move to session config later on
         self.merged = int(self.session.config.get('merged', False))
-
-        starting_price_A = c.get('starting_price_A', 0)
-        starting_price_B = c.get('starting_price_B', 0)
         initial_shares_A = c.get('initial_shares_A', 0)
         initial_shares_B = c.get('initial_shares_B', 0)
         initial_money_A = c.get('initial_money_A', 0)
@@ -76,8 +73,7 @@ class Subsession(BaseSubsession):
             p.cash_B = initial_money_B
             p.shares_A = initial_shares_A
             p.shares_B = initial_shares_B
-            p.stock_value_A = starting_price_A * initial_shares_A
-            p.stock_value_B = starting_price_B * initial_shares_B
+
 
 
 class Group(BaseGroup):
@@ -91,6 +87,10 @@ class Group(BaseGroup):
     @property
     def time_left(self):
         return (self.finish_time - timezone.now()).total_seconds()
+
+    def set_payoffs(self):
+        for p in self.get_players():
+            p.set_payoff()
 
     def set_group_params(self):
         c = self.session.config
@@ -115,13 +115,33 @@ class Group(BaseGroup):
 
 
 class Player(BasePlayer):
+    intermediary_payoff = models.CurrencyField()
     huey_val = models.IntegerField(initial=0)
     cash_A = models.FloatField()
     cash_B = models.FloatField()
     shares_A = models.FloatField()
     shares_B = models.FloatField()
-    stock_value_A = models.FloatField()
-    stock_value_B = models.FloatField()
+    dividend_A_payoff = models.CurrencyField()
+    dividend_B_payoff = models.CurrencyField()
+    stocks_A_payoff = models.CurrencyField()
+    stocks_B_payoff = models.CurrencyField()
+    cash_payoff = models.CurrencyField()
+
+    @property
+    def stock_value_A(self):
+        return self.shares_A * self.group.price_A
+
+    @property
+    def stock_value_B(self):
+        return self.shares_B * self.group.price_B
+
+    def set_payoff(self):
+        self.dividend_A_payoff = self.shares_A * self.group.dividend_A
+        self.dividend_B_payoff = self.shares_B * self.group.dividend_B
+        self.stocks_A_payoff = self.dividend_A_payoff + self.subsession.terminal_A * self.shares_A
+        self.stocks_B_payoff = self.dividend_B_payoff + self.subsession.terminal_B * self.shares_B
+        self.cash_payoff = self.total_cash()
+        self.intermediary_payoff = self.total_cash() + self.stocks_A_payoff + self.stocks_B_payoff
 
     def current_status(self):
         return dict(
@@ -244,9 +264,6 @@ class Player(BasePlayer):
             setattr(self, f'cash_{bid.market}', cash + bid.value)
             shares = getattr(self, f'shares_{bid.market}')
             setattr(self, f'shares_{bid.market}', shares - 1)
-            curprice = getattr(self.group, f'price_{bid.market}')
-            stock_value = getattr(self, f'stock_value_{bid.market}')
-            setattr(self, f'stock_value_{bid.market}', stock_value - curprice)
 
         if (bid.trader == self and bid.type == 'buy') or (bid.contractor == self and bid.type == 'sell'):
             # That means we just bought an item. TODO: can all this BS be simplified somehow?
@@ -254,13 +271,27 @@ class Player(BasePlayer):
             setattr(self, f'cash_{bid.market}', cash - bid.value)
             shares = getattr(self, f'shares_{bid.market}')
             setattr(self, f'shares_{bid.market}', shares + 1)
-            curprice = getattr(self.group, f'price_{bid.market}')
-            stock_value = getattr(self, f'stock_value_{bid.market}')
-            setattr(self, f'stock_value_{bid.market}', stock_value + curprice)
+
+    def optional_data_setter(self, market_data, market, param):
+        """Optionally update current status if it has changed. Not sure it's worth it but it saves a few database queries"""
+        upd_value = market_data.get(f'market_{market}', {}).get(param)
+        full_param_name = f'{param}_{market}'
+        print('optional?', market, param)
+        if upd_value and upd_value != getattr(self, full_param_name):
+            setattr(self, full_param_name, upd_value)
+
+    def update_stocks(self, market_data):
+        self.optional_data_setter(market_data, 'A', 'cash')
+        self.optional_data_setter(market_data, 'B', 'cash')
+        self.optional_data_setter(market_data, 'A', 'shares')
+        self.optional_data_setter(market_data, 'B', 'shares')
 
     def register_event(self, data):
         pprint(data)
         action = data.get('action', '')
+        market_data = data.get('marketData')
+        if market_data:
+            self.update_stocks(market_data)
         timestamp = timezone.now()
         if hasattr(self, action):
             method = getattr(self, action)

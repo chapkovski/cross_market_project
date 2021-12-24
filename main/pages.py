@@ -14,7 +14,7 @@ class MyPage(Page):
         return dict(status=self.player.current_status())
 
 class ResultsWaitPage(WaitPage):
-    pass
+    after_all_players_arrive = 'set_payoffs'
 
 
 class Results(Page):

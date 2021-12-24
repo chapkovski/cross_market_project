@@ -6,7 +6,95 @@
 {% endblock %}
 
 {% block content %}
+    <style>
+        .table-header-rotated {
+            border-collapse: collapse;
+        }
 
+        .table-header-rotated td {
+            width: 30px;
+        }
+
+        .table-header-rotated th {
+            padding: 5px 10px;
+        }
+
+        .table-header-rotated td {
+            text-align: center;
+            padding: 10px 5px;
+            border: 1px solid #ccc;
+        }
+
+         .table-header-rotated th.rotate {
+            height: 150px;
+            white-space: nowrap;
+
+        }
+
+       .table-header-rotated th.rotate > div {
+            transform: translate(25px, 51px) rotate(315deg);
+            width: 30px;
+           margin-bottom:60px
+        }
+
+        .table-header-rotated th.rotate > div > span {
+            border-bottom: 1px solid #ccc;
+            padding: 5px 10px;
+        }
+
+        .table-header-rotated th  {
+            padding: 0 10px;
+            border-bottom: 1px solid #ccc;
+        }
+    </style>
+    <table class="table table-stripped table-hover table-header-rotated">
+        <thead>
+        <tr>
+    <th>    </th>
+            <th class="rotate">
+                <div><span>Shares A</span></div>
+            </th>
+            <th class="rotate">
+                <div><span>Terminal value A</span></div>
+            </th>
+            <th class="rotate">
+                <div><span>Payoff from A market</span></div>
+            </th>
+            <th class="rotate">
+                <div><span>Shares B</span></div>
+            </th>
+            <th class="rotate">
+                <div><span>Terminal value B</span></div>
+            </th>
+            <th class="rotate">
+                <div><span>Payoff from B market</span></div>
+            </th>
+            <th class="rotate">
+                <div><span>Cash</span></div>
+            </th>
+            <th class="rotate">
+                <div><span>Total payoff</span></div>
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for p in player.in_all_rounds %}
+            <tr>
+                <td>Period {{ p.round_number }}</td>
+                <td>{{ p.shares_A }}</td>
+                <td>{{ p.subsession.terminal_A }}</td>
+                <td>{{ p.stocks_A_payoff }}</td>
+                <td>{{ p.shares_B }}</td>
+                <td>{{ p.subsession.terminal_B }}</td>
+                <td>{{ p.stocks_B_payoff }}</td>
+                <td>{{ p.cash_payoff }}</td>
+                <td>{{ p.intermediary_payoff }}</td>
+            </tr>
+        {% endfor %}
+
+        </tbody>
+
+    </table>
     {% next_button %}
 {% endblock %}
 
