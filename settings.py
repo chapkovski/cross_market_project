@@ -72,11 +72,10 @@ from huey import RedisHuey
 
 REDIS_URL = os.environ.get('REDIS_URL')
 if REDIS_URL:
-    HUEY = {'huey_class': 'huey.RedisHuey',
-            'connection': {
-                'url': REDIS_URL,  # Allow Redis config via a DSN.
-            },
-            }
+    HUEY = {'connection': {'url': REDIS_URL}}
     CHANNEL_LAYERS['default']["CONFIG"] = {
         "hosts": [REDIS_URL],
     }
+    print(HUEY)
+    print('======')
+
