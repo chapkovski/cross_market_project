@@ -72,7 +72,6 @@ class Subsession(BaseSubsession):
             p.shares_B = initial_shares_B
 
 
-
 class Group(BaseGroup):
     dividend_A = models.FloatField()
     dividend_B = models.FloatField()
@@ -100,6 +99,12 @@ class Group(BaseGroup):
         self.finish_time = timezone.now() + timedelta(seconds=day_length)
         self.dividend_A = random.choice(self.session.vars.get('dividends_A'))
         self.dividend_B = random.choice(self.session.vars.get('dividends_B'))
+        # HUEY block
+
+
+        eta = datetime.now() + timedelta(seconds=5)
+        h = handle_update.schedule((self,), eta=eta)
+        h()
 
     def get_full_history(self):
         hs = self.history.all()
@@ -273,7 +278,6 @@ class Player(BasePlayer):
         """Optionally update current status if it has changed. Not sure it's worth it but it saves a few database queries"""
         upd_value = market_data.get(f'market_{market}', {}).get(param)
         full_param_name = f'{param}_{market}'
-        print('optional?', market, param)
         if upd_value and upd_value != getattr(self, full_param_name):
             setattr(self, full_param_name, upd_value)
 
@@ -283,10 +287,14 @@ class Player(BasePlayer):
         self.optional_data_setter(market_data, 'A', 'shares')
         self.optional_data_setter(market_data, 'B', 'shares')
 
+    def huey_test(self, data, timestamp):
+        return {0: {'action': 'vsem pizda'}}
+
     def register_event(self, data):
         pprint(data)
         action = data.get('action', '')
-        market_data = data.get('marketData')
+        market_data = data.pop('marketData')
+        player_id = data.pop('player_id')
         if market_data:
             self.update_stocks(market_data)
         timestamp = timezone.now()

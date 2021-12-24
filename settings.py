@@ -1,5 +1,7 @@
 from os import environ
+import os
 
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 SESSION_CONFIGS = [
     dict(
         name='market_disjoint',
@@ -61,9 +63,44 @@ INSTALLED_APPS = ['otree',
                   ]
 from huey import SqliteHuey
 
-HUEY = SqliteHuey('db.sqlite3')
+# HUEY = SqliteHuey('db.sqlite3')
 # HUEY = {
 #     'huey_class': 'huey.SqliteHuey',
 #     'immediate_use_memory': False,
 #     "immediate": False
 # }
+# HUEY = {'huey_class': 'huey.SqliteHuey',
+#         # 'name': 'spirit',
+#         'filename': os.path.join(BASE_DIR, 'huey.sqlite3'),
+#         'immediate_use_memory': False,
+#         "immediate": False
+#         }
+# HUEY = {
+#     'huey_class': 'huey.SqliteHuey',
+#     'name': 'spirit',
+#     'filename': os.path.join(BASE_DIR, 'huey.sqlite3'),
+#     'immediate_use_memory': False,
+#     'immediate': False,
+#     'utc': True,
+#     'connection': {},
+#     'consumer': {
+#         'workers': os.cpu_count() * 2 + 1,
+#         'worker_type': 'thread',
+#         'initial_delay': 0.1,
+#         'backoff': 1.15,
+#         'max_delay': 10.0,
+#         'scheduler_interval': 1,
+#         'periodic': True,
+#         'check_worker_health': True,
+#         'health_check_interval': 1,
+#     }
+# }
+from channels_redis.core import  RedisChannelLayer
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
