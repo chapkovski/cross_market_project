@@ -58,10 +58,7 @@ class Subsession(BaseSubsession):
         self.session.vars['dividends_B'] = dividends_B
         self.dividends_A = json.dumps(dividends_A)
         self.dividends_B = json.dumps(dividends_B)
-        for p in self.get_players():
-            eta = datetime.now() + timedelta(seconds=10)
-            h = handle_update.schedule((p,), eta=eta)
-            h()
+
         self.tick_frequency = Constants.tick_frequency  # TODO: move to session config later on
         self.merged = int(self.session.config.get('merged', False))
         initial_shares_A = c.get('initial_shares_A', 0)
