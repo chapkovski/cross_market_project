@@ -74,11 +74,7 @@ REDIS_URL = os.environ.get('REDIS_URL')
 if REDIS_URL:
     pool = ConnectionPool.from_url(url=REDIS_URL)
     HUEY = RedisHuey('my-app', connection_pool=pool)
-    # HUEY = {'connection': {'url': REDIS_URL},
-    #         'immediate':False}
     CHANNEL_LAYERS['default']["CONFIG"] = {
         "hosts": [REDIS_URL],
     }
-    print(HUEY)
-    print('======')
 
