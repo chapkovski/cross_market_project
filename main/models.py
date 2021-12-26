@@ -8,6 +8,7 @@ from otree.api import (
     Currency as c,
     currency_range,
 )
+from copy import deepcopy
 from .tasks import handle_update
 import json
 import random
@@ -16,6 +17,7 @@ from django.utils import timezone
 from django.core import serializers
 from pprint import pprint
 from datetime import datetime, timedelta
+from otree.models import Participant
 
 author = 'Philipp Chapkovski, HSE'
 
@@ -27,7 +29,7 @@ Your app description
 class Constants(BaseConstants):
     name_in_url = 'main'
     players_per_group = None
-    num_rounds = 1
+    num_rounds = 10
     tick_frequency = 5
 
 
@@ -61,15 +63,6 @@ class Subsession(BaseSubsession):
 
         self.tick_frequency = Constants.tick_frequency  # TODO: move to session config later on
         self.merged = int(self.session.config.get('merged', False))
-        initial_shares_A = c.get('initial_shares_A', 0)
-        initial_shares_B = c.get('initial_shares_B', 0)
-        initial_money_A = c.get('initial_money_A', 0)
-        initial_money_B = c.get('initial_money_B', 0)
-        for p in self.get_players():
-            p.cash_A = initial_money_A
-            p.cash_B = initial_money_B
-            p.shares_A = initial_shares_A
-            p.shares_B = initial_shares_B
 
 
 class Group(BaseGroup):
@@ -88,8 +81,60 @@ class Group(BaseGroup):
         for p in self.get_players():
             p.set_payoff()
 
+    def create_virtuals(self):
+        num_non_virtual = len(self.get_players())
+        # creating virtual players. Let's do it first in a naive way
+        example_p = self.get_players()[0].participant
+        self.session.vars['example_real_participant_id'] = example_p.id
+
+        params = ['_index_in_pages',
+                  '_current_page_name',
+                  '_current_app_name',
+                  '_round_number',
+                  '_max_page_index']
+        vals = {i: getattr(example_p, i) for i in params}
+        vals['_index_in_pages'] = vals['_max_page_index']
+        num_virtual_players = self.session.config.get('num_virtual_players', 5)
+        virtual_participants = []
+        for i in range(num_virtual_players):
+            p = Participant(
+                label='VIRTUAL',
+                code=f'VIRTUAL_{str(random.randint(100000, 1000000))}',
+                session=self.session,
+                _session_code=self.session.code,
+                id_in_session=i + 10000,
+                visited=True,
+                **vals
+            )
+            virtual_participants.append(p)
+
+        Participant.objects.bulk_create(virtual_participants)
+        virtual_participants = Participant.objects.filter(session=self.session, code__startswith='VIRTUAL_')
+        self.session.num_participants += num_virtual_players
+        self.session.save()
+        virtual_players = []
+        for r in range(1, Constants.num_rounds + 1):
+            g = self.in_round(r)
+            for i, p in enumerate(virtual_participants):
+                # THAT IS WRONG!!!! - we need to assign future players to future groups not the same one
+                # 1/0
+                pl = Player(participant=p, session=self.session, subsession=self.subsession, group=g,
+                            id_in_group=i + 1 + num_non_virtual, round_number=r, virtual=True)
+                virtual_players.append(pl)
+
+        Player.objects.bulk_create(virtual_players)
+
+        # ENDO OF BLOCK: creating virtual players
+        # HUEY block - we'll call here matlab to schedule noise trader calls
+        eta = datetime.now() + timedelta(seconds=5)
+        h = handle_update.schedule((self,), eta=eta)
+        h()
+        # end of huey block
+
     def set_group_params(self):
+        print('DO WE PASS?', self.round_number)
         c = self.session.config
+
         day_length = c.get('day_length', 300)
         starting_price_A = c.get('starting_price_A', 0)
         starting_price_B = c.get('starting_price_B', 0)
@@ -99,12 +144,24 @@ class Group(BaseGroup):
         self.finish_time = timezone.now() + timedelta(seconds=day_length)
         self.dividend_A = random.choice(self.session.vars.get('dividends_A'))
         self.dividend_B = random.choice(self.session.vars.get('dividends_B'))
-        # HUEY block
-
-
-        eta = datetime.now() + timedelta(seconds=5)
-        h = handle_update.schedule((self,), eta=eta)
-        h()
+        # set player params
+        initial_shares_A = c.get('initial_shares_A', 0)
+        initial_shares_B = c.get('initial_shares_B', 0)
+        initial_money_A = c.get('initial_money_A', 0)
+        initial_money_B = c.get('initial_money_B', 0)
+        for p in self.get_players():
+            p.cash_A = initial_money_A
+            p.cash_B = initial_money_B
+            p.shares_A = initial_shares_A
+            p.shares_B = initial_shares_B
+        # the following block is not necessary but is convenient to trace virtuals in Data section
+        virtual_participants = Participant.objects.filter(session=self.session, code__startswith='VIRTUAL_')
+        example_p = Participant.objects.get(id=self.session.vars.get('example_real_participant_id'))
+        params_to_update = ['_current_page_name',
+                            '_current_app_name',
+                            '_round_number', ]
+        update_info = {i: getattr(example_p, i) for i in params_to_update}
+        virtual_participants.update(**update_info)
 
     def get_full_history(self):
         hs = self.history.all()
@@ -117,6 +174,7 @@ class Group(BaseGroup):
 
 
 class Player(BasePlayer):
+    virtual = models.BooleanField(initial=False)
     intermediary_payoff = models.CurrencyField()
     huey_val = models.IntegerField(initial=0)
     cash_A = models.FloatField()
