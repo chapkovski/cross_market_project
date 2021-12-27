@@ -10,27 +10,26 @@ from django.utils import timezone
 
 @db_task()
 def handle_update(group_id, virtual_id):
+    # TODO: move to group function
     virtual = Player.objects.get(id=virtual_id)
     group = Group.objects.get(id=group_id)
     market = random.choice(Constants.markets)
-    bid_type = random.choice([BidType.sell, BidType.buy])
-    epsilon = 1
-    price = getattr(group, f'price_{market}')
+    bid_type = random.choice(['sell', 'buy'])
     direction = 1 if bid_type == 'sell' else -1
+    order_by = '-' if bid_type == 'sell' else ''
+    epsilon = 1
+    current_bids = group.bids.filter(market=market, type=bid_type, active=True).order_by(f'{order_by}value')
+    if current_bids.exists():
+        value=current_bids.first().value+ direction * epsilon
+    else:
+        price = getattr(group, f'price_{market}')
+        value = price + direction * epsilon
     timestamp = timezone.now()
-    value = price + direction * epsilon
     data = dict(type=bid_type, market=market, value=value)
     resp = virtual.addBid(data, timestamp)
-    bids = group.bids.filter(active=True).values('trader', 'value', 'type', 'market', 'id')
+    bids = group.bids.filter(active=True).values('trader', 'value', 'type', 'market', 'id', 'trader__virtual')
     bids = list(bids)
-    msg =  {
-        0: dict(timestamp=timestamp.strftime('%m_%d_%Y_%H_%M_%S'), action='setBids', bids=bids)}
-    print('-------------------------')
-    return
-    page_index = group.index_in_pages
-    session_code = group.session.code
-    group_name = channel_utils.live_group(session_code, page_index)
-    message = json.dumps(dict(action='scheduled_virtual_action', virtual_player_id=virtual.id))
-    channel_utils.sync_group_send_wrapper(
-        group=group_name, type='websocket_receive', event=dict(text=message)
-    )
+    for i in group.get_non_virtuals():
+        msg = {i.participant.code: dict(timestamp=timestamp.strftime('%m_%d_%Y_%H_%M_%S'), action='setBids', bids=bids)}
+        _live_send_back(i.participant._session_code, i.participant._index_in_pages,
+                        msg)

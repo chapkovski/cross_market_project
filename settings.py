@@ -33,12 +33,13 @@ SESSION_CONFIG_DEFAULTS = dict(
     starting_price_A=100,
     starting_price_B=100,
     group_size=3,
-    day_length=30,
+    day_length=150,
     dividends_A='0, 10, 16, 22',
     dividends_B='-20,-10,0,10, 20',
     terminal_A=50.0,
     terminal_B=70.0,
-    num_virtual_players=6
+    num_virtual_players=6,
+    max_calls=6,
 
 )
 

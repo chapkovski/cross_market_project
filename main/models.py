@@ -33,13 +33,14 @@ def create_scheduled_calls(group, virtuals, day_length):
     # TODO: that's the point where we call matlab and get back the list of ids of players and the timeslots.
     # TODO: right now it's just a naive realiazion of the same process
     timeslots = list(range(1, day_length))
-    pairs = list(product(timeslots, virtuals))
-    MAX_CALLS = 6
-    real_pairs = random.choices(pairs, k=MAX_CALLS)
-    for secs_delay, v in real_pairs:
-        eta = datetime.now() + timedelta(seconds=secs_delay)
-        h = handle_update.schedule((group.id, v.id), eta=eta)
-        h()
+    MAX_CALLS = group.session.config.get('max_calls', 5)
+    for v in virtuals:
+        num_calls= random.randint(1,MAX_CALLS)
+        calls = random.choices(timeslots,k=num_calls)
+        for c in calls:
+            eta = datetime.now() + timedelta(seconds=c)
+            h = handle_update.schedule((group.id, v.id), eta=eta)
+            h()
 
 
 class BidType:
@@ -149,6 +150,9 @@ class Group(BaseGroup):
 
     def get_virtual_players(self):
         return self.player_set.filter(participant__code__startswith=VIRTUAL_PREFIX)
+
+    def get_non_virtuals(self):
+        return self.player_set.exclude(virtual=True)
 
     def set_group_params(self):
         # a bit naive, but will work taking into account that we rely on this code to correclty calculate the scheduled call.
@@ -398,7 +402,7 @@ class Player(BasePlayer):
             method = getattr(self, action)
             return method(data, timestamp)
 
-        bids = self.group.bids.filter(active=True).values('trader', 'value', 'type', 'market', 'id')
+        bids = self.group.bids.filter(active=True).values('trader', 'value', 'type', 'market', 'id', 'trader__virtual')
         bids = list(bids)
         return {
             self.id_in_group: dict(timestamp=timestamp.strftime('%m_%d_%Y_%H_%M_%S'), action='setBids', bids=bids)}
