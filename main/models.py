@@ -9,7 +9,7 @@ from otree.api import (
     currency_range,
 )
 from copy import deepcopy
-from .tasks import handle_update
+
 import json
 import random
 from django.db import models as djmodels
@@ -18,6 +18,7 @@ from django.core import serializers
 from pprint import pprint
 from datetime import datetime, timedelta
 from otree.models import Participant
+from itertools import product
 
 VIRTUAL_PREFIX = 'VIRTUAL_'
 author = 'Philipp Chapkovski, HSE'
@@ -26,11 +27,24 @@ doc = """
 Your app description
 """
 
+
 def create_scheduled_calls(group, virtuals, day_length):
-    for i, v in enumerate(virtuals):
-        eta = datetime.now() + timedelta(seconds=5 + i)
-        h = handle_update.schedule((self, v), eta=eta)
+    from .tasks import handle_update
+    # TODO: that's the point where we call matlab and get back the list of ids of players and the timeslots.
+    # TODO: right now it's just a naive realiazion of the same process
+    timeslots = list(range(1, day_length))
+    pairs = list(product(timeslots, virtuals))
+    MAX_CALLS = 6
+    real_pairs = random.choices(pairs, k=MAX_CALLS)
+    for secs_delay, v in real_pairs:
+        eta = datetime.now() + timedelta(seconds=secs_delay)
+        h = handle_update.schedule((group.id, v.id), eta=eta)
         h()
+
+
+class BidType:
+    sell = 'sell'
+    buy = 'buy'
 
 
 class Constants(BaseConstants):
@@ -38,6 +52,7 @@ class Constants(BaseConstants):
     players_per_group = None
     num_rounds = 10
     tick_frequency = 5
+    markets = ['A', 'B']
 
 
 conv = lambda x: [float(i.strip()) for i in x.split(',')]
@@ -73,6 +88,7 @@ class Subsession(BaseSubsession):
 
 
 class Group(BaseGroup):
+    index_in_pages = models.IntegerField()
     dividend_A = models.FloatField()
     dividend_B = models.FloatField()
     price_A = models.FloatField()
@@ -123,8 +139,6 @@ class Group(BaseGroup):
         for r in range(1, Constants.num_rounds + 1):
             g = self.in_round(r)
             for i, p in enumerate(virtual_participants):
-                # THAT IS WRONG!!!! - we need to assign future players to future groups not the same one
-                # 1/0
                 pl = Player(participant=p, session=self.session, subsession=self.subsession, group=g,
                             id_in_group=i + 1 + num_non_virtual, round_number=r, virtual=True)
                 virtual_players.append(pl)
@@ -137,7 +151,9 @@ class Group(BaseGroup):
         return self.player_set.filter(participant__code__startswith=VIRTUAL_PREFIX)
 
     def set_group_params(self):
-
+        # a bit naive, but will work taking into account that we rely on this code to correclty calculate the scheduled call.
+        # if this is not true, the schedule won't work as well, and then we'll have more serious problems to think of.
+        self.index_in_pages = self.player_set.exclude(virtual=True).first().participant._index_in_pages + 1
         c = self.session.config
 
         day_length = c.get('day_length', 300)
@@ -172,8 +188,10 @@ class Group(BaseGroup):
         #  HUEY block - we'll call here matlab to schedule noise trader calls
         # ONCE AGAIN: this one should be correctly replaced with  MATLAB call.
         # Here we get all the current virtual players. and schedule some actions for them
-        # TODO:  create_scheduled_calls(self.get_virtual_players(), day_length)
-        # end of huey block
+        # it's perhaps more correcct to keep it within group, but to make it easier to locate and integrate with matlab
+        # let's keep it separate
+        create_scheduled_calls(self, self.get_virtual_players(), day_length)
+        # END OF HUEY BLOCK
         return
 
     def get_full_history(self):
@@ -277,11 +295,12 @@ class Player(BasePlayer):
         if counterparts and counterparts.exists():
             counterpart = counterparts.first()
             data['bid_id'] = counterpart.id
+
             return self.takeBid(data, timestamp)
         removal_info = dict(bid_to_remove=self.inner_cancel_bid(data, timestamp))
         injector = data.copy()
-        injector.pop('action')
-        injector.pop('trader_id')
+        injector.pop('action', None)
+        injector.pop('trader_id', None)
         b = Bid(trader=self, group=self.group, timestamp=timestamp, active=True,
                 **injector)
         b.save()
@@ -359,8 +378,14 @@ class Player(BasePlayer):
         self.optional_data_setter(market_data, 'B', 'shares')
 
     def scheduled_virtual_action(self, data, timestamp):
-        print('VIRTUAL DATA::', data)
-        return {0: {'action': 'from_huey', 'who_is_this': data.get('participant_code')}}
+        # TODO: here we ll inject the matlab call to define to which market we'll put a bid or ask
+        # TODO on behalf of the virtual player
+        # TODO: and at which size. Right now let's do something naive: a virtual player will put a bit/ask slightly
+        # higher or lower than the current market price.
+        print('whos calling??', self.id, data)
+        virtual = Player.objects.get(id=data.get('virtual_player_id'))
+
+        return {0: {'action': 'from_huey', 'who_is_this': data.get('virtual_player_id')}}
 
     def register_event(self, data):
         action = data.get('action', '')
