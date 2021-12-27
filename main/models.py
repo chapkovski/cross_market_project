@@ -19,11 +19,18 @@ from pprint import pprint
 from datetime import datetime, timedelta
 from otree.models import Participant
 
+VIRTUAL_PREFIX = 'VIRTUAL_'
 author = 'Philipp Chapkovski, HSE'
 
 doc = """
 Your app description
 """
+
+def create_scheduled_calls(group, virtuals, day_length):
+    for i, v in enumerate(virtuals):
+        eta = datetime.now() + timedelta(seconds=5 + i)
+        h = handle_update.schedule((self, v), eta=eta)
+        h()
 
 
 class Constants(BaseConstants):
@@ -99,7 +106,7 @@ class Group(BaseGroup):
         for i in range(num_virtual_players):
             p = Participant(
                 label='VIRTUAL',
-                code=f'VIRTUAL_{str(random.randint(100000, 1000000))}',
+                code=f'{VIRTUAL_PREFIX}{str(random.randint(100000, 1000000))}',
                 session=self.session,
                 _session_code=self.session.code,
                 id_in_session=i + 10000,
@@ -125,14 +132,12 @@ class Group(BaseGroup):
         Player.objects.bulk_create(virtual_players)
 
         # ENDO OF BLOCK: creating virtual players
-        # HUEY block - we'll call here matlab to schedule noise trader calls
-        eta = datetime.now() + timedelta(seconds=5)
-        h = handle_update.schedule((self,), eta=eta)
-        h()
-        # end of huey block
+
+    def get_virtual_players(self):
+        return self.player_set.filter(participant__code__startswith=VIRTUAL_PREFIX)
 
     def set_group_params(self):
-        print('DO WE PASS?', self.round_number)
+
         c = self.session.config
 
         day_length = c.get('day_length', 300)
@@ -154,14 +159,22 @@ class Group(BaseGroup):
             p.cash_B = initial_money_B
             p.shares_A = initial_shares_A
             p.shares_B = initial_shares_B
+        #
         # the following block is not necessary but is convenient to trace virtuals in Data section
-        virtual_participants = Participant.objects.filter(session=self.session, code__startswith='VIRTUAL_')
+        virtual_participants = Participant.objects.filter(session=self.session, code__startswith=VIRTUAL_PREFIX)
         example_p = Participant.objects.get(id=self.session.vars.get('example_real_participant_id'))
         params_to_update = ['_current_page_name',
                             '_current_app_name',
                             '_round_number', ]
         update_info = {i: getattr(example_p, i) for i in params_to_update}
         virtual_participants.update(**update_info)
+
+        #  HUEY block - we'll call here matlab to schedule noise trader calls
+        # ONCE AGAIN: this one should be correctly replaced with  MATLAB call.
+        # Here we get all the current virtual players. and schedule some actions for them
+        # TODO:  create_scheduled_calls(self.get_virtual_players(), day_length)
+        # end of huey block
+        return
 
     def get_full_history(self):
         hs = self.history.all()
@@ -345,14 +358,14 @@ class Player(BasePlayer):
         self.optional_data_setter(market_data, 'A', 'shares')
         self.optional_data_setter(market_data, 'B', 'shares')
 
-    def huey_test(self, data, timestamp):
-        return {0: {'action': 'vsem pizda'}}
+    def scheduled_virtual_action(self, data, timestamp):
+        print('VIRTUAL DATA::', data)
+        return {0: {'action': 'from_huey', 'who_is_this': data.get('participant_code')}}
 
     def register_event(self, data):
-        pprint(data)
         action = data.get('action', '')
-        market_data = data.pop('marketData')
-        player_id = data.pop('player_id')
+        market_data = data.pop('marketData', None)
+        player_id = data.pop('player_id', None)
         if market_data:
             self.update_stocks(market_data)
         timestamp = timezone.now()

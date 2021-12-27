@@ -33,7 +33,7 @@ SESSION_CONFIG_DEFAULTS = dict(
     starting_price_A=100,
     starting_price_B=100,
     group_size=3,
-    day_length=15,
+    day_length=20,
     dividends_A='0, 10, 16, 22',
     dividends_B='-20,-10,0,10, 20',
     terminal_A=50.0,
@@ -72,10 +72,13 @@ CHANNEL_LAYERS = {
 from huey import RedisHuey
 from redis import ConnectionPool
 
-REDIS_URL = os.environ.get('REDIS_URL')
+REDIS_URL = os.environ.get('REDIS_URL', "redis://localhost:6379")
 if REDIS_URL:
-    pool = ConnectionPool.from_url(url=REDIS_URL)
-    HUEY = RedisHuey('my-app', connection_pool=pool)
+    # pool = ConnectionPool.from_url(url=REDIS_URL)
+    # HUEY = RedisHuey('crossmarket',
+    #                     url=REDIS_URL,
+    #                  # connection_pool=pool,
+    #                  consumer=dict(workers=2, scheduler_interval=2))
     CHANNEL_LAYERS['default']["CONFIG"] = {
         "hosts": [REDIS_URL],
     }
