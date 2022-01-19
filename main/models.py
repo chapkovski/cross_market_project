@@ -19,7 +19,7 @@ from pprint import pprint
 from datetime import datetime, timedelta
 from otree.models import Participant
 from itertools import product
-
+from .matlab_connector import get_mm_bids, get_nt_quote
 VIRTUAL_PREFIX = 'VIRTUAL_'
 author = 'Philipp Chapkovski, HSE'
 
@@ -32,6 +32,7 @@ def create_scheduled_calls(group, virtuals, day_length):
     from .tasks import handle_update
     # TODO: that's the point where we call matlab and get back the list of ids of players and the timeslots.
     # TODO: right now it's just a naive realiazion of the same process
+    # TODO: split the scheduling for two markets, pass market name as an input when scheduling.
     timeslots = list(range(1, day_length))
     MAX_CALLS = group.session.config.get('max_calls', 5)
     for v in virtuals:
@@ -74,11 +75,17 @@ class Subsession(BaseSubsession):
 
     def creating_session(self):
         c = self.session.config
+        dividends_A = conv(c.get('dividends_A'))
+        dividends_B = conv(c.get('dividends_A'))
+        # LETS TRY TO GET SOMETHIGN FROM MATLAB?
+        pprint(get_mm_bids(self.round_number, Constants.num_rounds, 100, 0.5))
+        pprint(get_nt_quote(round_number=self.round_number, num_rounds=Constants.num_rounds, prev_price=100, dividends=dividends_A))
+        print('----MATLAB----')
+
         self.terminal_A = c.get('terminal_A')
         self.terminal_B = c.get('terminal_B')
 
-        dividends_A = conv(c.get('dividends_A'))
-        dividends_B = conv(c.get('dividends_A'))
+
         self.session.vars['dividends_A'] = dividends_A
         self.session.vars['dividends_B'] = dividends_B
         self.dividends_A = json.dumps(dividends_A)
@@ -161,10 +168,16 @@ class Group(BaseGroup):
         c = self.session.config
 
         day_length = c.get('day_length', 300)
+
         starting_price_A = c.get('starting_price_A', 0)
         starting_price_B = c.get('starting_price_B', 0)
-        self.price_A = starting_price_A
-        self.price_B = starting_price_B
+        r = self.round_number - 1
+        if self.round_number == 1:
+            self.price_A = starting_price_A
+            self.price_B = starting_price_B
+        else:
+            self.price_A = self.in_round(r).price_A
+            self.price_B = self.in_round(r).price_B
         self.starting_time = timezone.now()
         self.finish_time = timezone.now() + timedelta(seconds=day_length)
         self.dividend_A = random.choice(self.session.vars.get('dividends_A'))
@@ -174,11 +187,21 @@ class Group(BaseGroup):
         initial_shares_B = c.get('initial_shares_B', 0)
         initial_money_A = c.get('initial_money_A', 0)
         initial_money_B = c.get('initial_money_B', 0)
-        for p in self.get_players():
-            p.cash_A = initial_money_A
-            p.cash_B = initial_money_B
-            p.shares_A = initial_shares_A
-            p.shares_B = initial_shares_B
+
+        if self.round_number == 1:
+            for p in self.get_players():
+                p.cash_A = initial_money_A
+                p.cash_B = initial_money_B
+                p.shares_A = initial_shares_A
+                p.shares_B = initial_shares_B
+        else:
+
+            for p in self.get_players():
+                p.cash_A = p.in_round(r).cash_A
+                p.cash_B = p.in_round(r).cash_B
+                p.shares_A = p.in_round(r).shares_A
+                p.shares_B = p.in_round(r).shares_B
+
         #
         # the following block is not necessary but is convenient to trace virtuals in Data section
         virtual_participants = Participant.objects.filter(session=self.session, code__startswith=VIRTUAL_PREFIX)
@@ -196,13 +219,16 @@ class Group(BaseGroup):
         # let's keep it separate
         create_scheduled_calls(self, self.get_virtual_players(), day_length)
         # END OF HUEY BLOCK
-        return
+
 
     def get_full_history(self):
-        hs = self.history.all()
+        if self.round_number ==1:
+            return dict(A=None, B=None)
+        else:
+            a_prices = [i.price_A for i in self.in_previous_rounds()]
+            b_prices = [i.price_B for i in self.in_previous_rounds()]
+            return dict(A=a_prices, B=b_prices)
 
-        return dict(A=list(hs.filter(market='A').values_list('time_in_millisecs', 'value', )),
-                    B=list(hs.filter(market='B').values_list('time_in_millisecs', 'value', )))
 
     def price_update(self, new_price, market):
         setattr(self, f'price_{market}', new_price)

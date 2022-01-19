@@ -15,7 +15,12 @@ class SetParamsWP(WaitPage):
     after_all_players_arrive = 'set_group_params'
 
 
-class MyPage(Page):
+class Intro(Page):
+    def is_displayed(self):
+        return self.round_number == 1
+
+
+class Trade(Page):
     live_method = 'register_event'
 
     def js_vars(self):
@@ -33,4 +38,8 @@ class Results(Page):
 page_sequence = [
     FirstWP,
     SetParamsWP,
-    MyPage, ResultsWaitPage, Results]
+    Intro,
+    Trade,
+    ResultsWaitPage,
+    Results
+]
