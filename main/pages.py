@@ -38,7 +38,7 @@ class Results(Page):
 page_sequence = [
     FirstWP,
     SetParamsWP,
-    Intro,
+    # Intro,
     Trade,
     ResultsWaitPage,
     Results

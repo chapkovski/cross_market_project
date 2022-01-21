@@ -10,7 +10,21 @@ from django.utils import timezone
 
 
 def signal_for_market_maker():
+
+
     """
+    WITHIN trading day we feedback to MM the midpoint of best bid and ask in the market as an auxS\
+    in the begin
+
+    day 1: auxS = fundamental value
+    SD = 0
+    at the beginning of the days > 1, auxS = average price of day 1.
+    at the day 2 SD  stays stable within each trading round
+    For all days but 1 :
+    sigma = SD of all closed contracts (closed bids) of the privious day
+    auxS = SD of all closed contracts (closed bids) of the privious day
+
+    FOR NOISE TRADERS: AUX_P IS ALWAYS PREIVOUS ONE
 
     market makers put some bids around average price of the PREVIOUS session for both sides.
     market makers when someone accepts one of their bids, replace both their bids.
@@ -24,20 +38,6 @@ def signal_for_market_maker():
     """
 @db_task()
 def handle_update(group_id, virtual_id):
-    """
-    keep the portofoglio of cash and shares from period to period.
-
-
-    The price history is not dynamic: we get rid of chart in period 1.
-    Price history is a history of closing prices in previous days.
-    Mean price and sd - OF THE PREVIOUS DAYS!!!!
-
-    :param group_id:
-    :param virtual_id:
-    :return:
-    """
-    # TODO: move to group function
-
     # Matlab input: for noise traders we get the average price history
     # In addition: for market maker: add sd of the price history
     # In addition calculate fundamental value
@@ -62,8 +62,8 @@ def handle_update(group_id, virtual_id):
     timestamp = timezone.now()
     data = dict(type=bid_type, market=market, value=value)
     resp = virtual.addBid(data, timestamp)
-    bids = group.bids.filter(active=True).values('trader', 'value', 'type', 'market', 'id', 'trader__virtual')
-    bids = list(bids)
+    bids = group.get_active_bids()
+
     for i in group.get_non_virtuals():
         msg = {i.participant.code: dict(timestamp=timestamp.strftime('%m_%d_%Y_%H_%M_%S'), action='setBids', bids=bids)}
         _live_send_back(i.participant._session_code, i.participant._index_in_pages,

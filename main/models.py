@@ -14,13 +14,27 @@ import json
 import random
 from django.db import models as djmodels
 from django.utils import timezone
-from django.core import serializers
+from django.db.models import Max, StdDev, Avg
 from pprint import pprint
 from datetime import datetime, timedelta
 from otree.models import Participant
-from itertools import product
-from .matlab_connector import get_mm_bids, get_nt_quote
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from uuid import UUID, uuid4
+from otree.live import _live_send_back
+from otree.channels.utils import group_send_wrapper, live_group
+
+"""
+     await channel_utils.group_send_wrapper(
+                type='room_session_ready',
+                group=channel_utils.room_participants_group_name(room_name),
+                event={},
+            )
+"""
+
+# from .matlab_connector import get_mm_bids, get_nt_quote
 VIRTUAL_PREFIX = 'VIRTUAL_'
+MARKET_MAKER_PREFIX = 'MARKET_MAKER'
 author = 'Philipp Chapkovski, HSE'
 
 doc = """
@@ -36,8 +50,8 @@ def create_scheduled_calls(group, virtuals, day_length):
     timeslots = list(range(1, day_length))
     MAX_CALLS = group.session.config.get('max_calls', 5)
     for v in virtuals:
-        num_calls= random.randint(1,MAX_CALLS)
-        calls = random.choices(timeslots,k=num_calls)
+        num_calls = random.randint(1, MAX_CALLS)
+        calls = random.choices(timeslots, k=num_calls)
         for c in calls:
             eta = datetime.now() + timedelta(seconds=c)
             h = handle_update.schedule((group.id, v.id), eta=eta)
@@ -68,6 +82,19 @@ class Subsession(BaseSubsession):
     dividends_A = models.StringField()
     dividends_B = models.StringField()
 
+    def fv(self, market):
+        """
+        fundament value for market
+        :param market: market name (A, B)
+        :return: fundamental value
+        """
+        dividends = self.session.vars[f'dividends_{market}']
+        mean_dividends = sum(dividends) / len(dividends)
+        terminal_value = getattr(self, f'terminal_{market}')
+        print('AAAA', market, terminal_value, mean_dividends,
+              (mean_dividends) * (Constants.num_rounds - self.round_number + 1) + terminal_value)
+        return (mean_dividends) * (Constants.num_rounds - self.round_number + 1) + terminal_value
+
     def group_by_arrival_time_method(self, waiting_players):
         group_size = self.session.config.get('group_size')
         if len(waiting_players) >= group_size:
@@ -76,15 +103,15 @@ class Subsession(BaseSubsession):
     def creating_session(self):
         c = self.session.config
         dividends_A = conv(c.get('dividends_A'))
-        dividends_B = conv(c.get('dividends_A'))
+        dividends_B = conv(c.get('dividends_B'))
         # LETS TRY TO GET SOMETHIGN FROM MATLAB?
-        pprint(get_mm_bids(self.round_number, Constants.num_rounds, 100, 0.5))
-        pprint(get_nt_quote(round_number=self.round_number, num_rounds=Constants.num_rounds, prev_price=100, dividends=dividends_A))
+        print('----MATLAB----')
+        # pprint(get_mm_bids(self.round_number, Constants.num_rounds, 100, 0.5))
+        # pprint(get_nt_quote(round_number=self.round_number, num_rounds=Constants.num_rounds, prev_price=100, dividends=dividends_A))
         print('----MATLAB----')
 
         self.terminal_A = c.get('terminal_A')
         self.terminal_B = c.get('terminal_B')
-
 
         self.session.vars['dividends_A'] = dividends_A
         self.session.vars['dividends_B'] = dividends_B
@@ -96,6 +123,14 @@ class Subsession(BaseSubsession):
 
 
 class Group(BaseGroup):
+    aux_s_A = models.FloatField()  # average price of the asset A in the previous period (for round 1 - FV)
+    sigma_A = models.FloatField()  # average volatility of the asset A in the previous period (for round 1 - 0)
+    aux_s_B = models.FloatField()  # average price of the asset A in the previous period (for round 1 - FV)
+    sigma_B = models.FloatField()  # average volatility of the asset A in the previous period (for round 1 - 0)
+    ex_post_aux_s_A = models.FloatField()  # average price of the asset A in the previous period (for round 1 - FV)
+    ex_post_sigma_A = models.FloatField()  # average volatility of the asset A in the previous period (for round 1 - 0)
+    ex_post_aux_s_B = models.FloatField()  # average price of the asset A in the previous period (for round 1 - FV)
+    ex_post_sigma_B = models.FloatField()  # average volatility of the asset A in the previous period (for round 1 - 0)
     index_in_pages = models.IntegerField()
     dividend_A = models.FloatField()
     dividend_B = models.FloatField()
@@ -104,11 +139,33 @@ class Group(BaseGroup):
     starting_time = djmodels.DateTimeField(null=True)
     finish_time = djmodels.DateTimeField(null=True)
 
+    def dynamic_aux_s(self, market):
+        """
+        :param market: name of the stock market (A,B) 
+        :return: midpoint of the spread if exists, otherwise initial aus_x
+        """
+        bids = self.bids.filter(market=market, active=True)
+        best_buy = bids.filter(type='buy').order_by('-value').first()
+        best_sell = bids.filter(type='sell').order_by('value').first()
+
+        if best_buy and best_sell and best_sell.value > best_buy.value:
+            print(f"{best_buy.value=} {best_sell.value=}")
+            print(f'{(best_sell.value + best_buy.value) / 2=}')
+            print('*' * 100)
+            return (best_sell.value + best_buy.value) / 2
+        else:
+            return getattr(self, f'aux_s_{market}')
+
+    @property
+    def market_maker(self):
+        return self.player_set.get(participant__label=MARKET_MAKER_PREFIX)
+
     @property
     def time_left(self):
         return (self.finish_time - timezone.now()).total_seconds()
 
     def set_payoffs(self):
+        self.set_ex_post_values()
         for p in self.get_players():
             p.set_payoff()
 
@@ -127,28 +184,43 @@ class Group(BaseGroup):
         vals['_index_in_pages'] = vals['_max_page_index']
         num_virtual_players = self.session.config.get('num_virtual_players', 5)
         virtual_participants = []
+        max_id_in_session = Participant.objects.filter(session=self.session).aggregate(Max('id_in_session')).get(
+            'id_in_session__max')
+
         for i in range(num_virtual_players):
             p = Participant(
                 label='VIRTUAL',
-                code=f'{VIRTUAL_PREFIX}{str(random.randint(100000, 1000000))}',
+                code=f'{VIRTUAL_PREFIX}{uuid4().hex}',
                 session=self.session,
                 _session_code=self.session.code,
-                id_in_session=i + 10000,
+                id_in_session=i + max_id_in_session,
                 visited=True,
                 **vals
             )
             virtual_participants.append(p)
-
+        new_max_id_in_session = max_id_in_session + num_virtual_players
+        mm = Participant(
+            label=MARKET_MAKER_PREFIX,
+            code=f'{VIRTUAL_PREFIX}{uuid4().hex}',
+            session=self.session,
+            _session_code=self.session.code,
+            id_in_session=new_max_id_in_session + 1,
+            visited=True,
+            **vals
+        )
+        virtual_participants.append(mm)
         Participant.objects.bulk_create(virtual_participants)
-        virtual_participants = Participant.objects.filter(session=self.session, code__startswith='VIRTUAL_')
-        self.session.num_participants += num_virtual_players
+        virtual_participants = Participant.objects.filter(session=self.session, code__startswith=VIRTUAL_PREFIX)
+        self.session.num_participants += len(virtual_participants)
         self.session.save()
         virtual_players = []
         for r in range(1, Constants.num_rounds + 1):
             g = self.in_round(r)
             for i, p in enumerate(virtual_participants):
-                pl = Player(participant=p, session=self.session, subsession=self.subsession, group=g,
-                            id_in_group=i + 1 + num_non_virtual, round_number=r, virtual=True)
+                is_mm = p.label == MARKET_MAKER_PREFIX
+                pl = Player(participant=p, session=self.session, subsession=g.subsession, group=g,
+                            id_in_group=i + 1 + num_non_virtual, round_number=r, virtual=True,
+                            is_mm=is_mm)
                 virtual_players.append(pl)
 
         Player.objects.bulk_create(virtual_players)
@@ -161,23 +233,40 @@ class Group(BaseGroup):
     def get_non_virtuals(self):
         return self.player_set.exclude(virtual=True)
 
+    def set_ex_post_values(self):
+        params_A = self.bids.filter(active=False, cancelled=False, market='A').aggregate(Avg('value'), StdDev('value'))
+        params_B = self.bids.filter(active=False, cancelled=False, market='B').aggregate(Avg('value'), StdDev('value'))
+        self.ex_post_aux_s_A = params_A.get('value__avg')
+        self.ex_post_aux_s_B = params_A.get('value__avg')
+        self.ex_post_sigma_A = params_A.get('value__stddev')
+        self.ex_post_sigma_B = params_B.get('value__stddev')
+
     def set_group_params(self):
         # a bit naive, but will work taking into account that we rely on this code to correclty calculate the scheduled call.
         # if this is not true, the schedule won't work as well, and then we'll have more serious problems to think of.
         self.index_in_pages = self.player_set.exclude(virtual=True).first().participant._index_in_pages + 1
         c = self.session.config
-
         day_length = c.get('day_length', 300)
 
-        starting_price_A = c.get('starting_price_A', 0)
-        starting_price_B = c.get('starting_price_B', 0)
+        starting_price_A = self.subsession.fv('A')
+        starting_price_B = self.subsession.fv('B')
+
         r = self.round_number - 1
         if self.round_number == 1:
             self.price_A = starting_price_A
             self.price_B = starting_price_B
+            self.aux_s_A = starting_price_A
+            self.aux_s_B = starting_price_B
+            self.sigma_A = 0
+            self.sigma_B = 0
         else:
-            self.price_A = self.in_round(r).price_A
-            self.price_B = self.in_round(r).price_B
+            prev = self.in_round(r)
+            self.aux_s_A = prev.ex_post_aux_s_A
+            self.aux_s_B = prev.ex_post_aux_s_B
+            self.sigma_A = prev.ex_post_sigma_A
+            self.sigma_B = prev.ex_post_sigma_B
+            self.price_A = prev.price_A
+            self.price_B = prev.price_B
         self.starting_time = timezone.now()
         self.finish_time = timezone.now() + timedelta(seconds=day_length)
         self.dividend_A = random.choice(self.session.vars.get('dividends_A'))
@@ -219,25 +308,34 @@ class Group(BaseGroup):
         # let's keep it separate
         create_scheduled_calls(self, self.get_virtual_players(), day_length)
         # END OF HUEY BLOCK
-
+        # MMs bids: let's think if this is the best place but PORAE
+        mm = self.market_maker
+        print(self.dynamic_aux_s(market='A'))
+        print('$' * 100)
+        mm.post_new_bids(market='A')
+        mm.post_new_bids(market='B')
 
     def get_full_history(self):
-        if self.round_number ==1:
+        if self.round_number == 1:
             return dict(A=None, B=None)
         else:
             a_prices = [i.price_A for i in self.in_previous_rounds()]
             b_prices = [i.price_B for i in self.in_previous_rounds()]
             return dict(A=a_prices, B=b_prices)
 
-
     def price_update(self, new_price, market):
         setattr(self, f'price_{market}', new_price)
+
+    def get_active_bids(self):
+        bids = self.bids.filter(active=True).values('trader', 'value', 'type', 'market', 'id', 'trader__virtual',
+                                                    'trader__is_mm')
+        return list(bids)
 
 
 class Player(BasePlayer):
     virtual = models.BooleanField(initial=False)
+    is_mm = models.BooleanField(initial=False)
     intermediary_payoff = models.CurrencyField()
-    huey_val = models.IntegerField(initial=0)
     cash_A = models.FloatField()
     cash_B = models.FloatField()
     shares_A = models.FloatField()
@@ -309,11 +407,13 @@ class Player(BasePlayer):
             b = bids.first()
             b.contractor = self
             b.active = False
+            b.cancelled = True
             b.closure_timestamp = timestamp
             b.save()
             return b.id
 
     def addBid(self, data, timestamp):
+        print('HOW SIGNATURE LIKE IN ADDBID', data)
         bid_type = data.get('type')
         value = data.get('value')
         market = data.get('market')
@@ -336,9 +436,31 @@ class Player(BasePlayer):
         b.save()
         return {0: dict(action='addBid', bid=b.as_dict(), **removal_info)}
 
-    def clearing_market(self):
+    def post_new_bids(self, market):
+        if not self.is_mm:
+            return
+        eps = 2.5
+        aux_s = self.group.dynamic_aux_s(market)
+        to_add = [
+            dict(type='sell', market=market, value=aux_s + eps, ),
+            dict(type='buy', market=market, value=aux_s - eps, ),
 
-        pass
+        ]
+        timestamp = timezone.now()
+        bids = self.group.get_active_bids()
+        print(f'NUM BIDS BEFORE: {len(bids)}')
+        for a in to_add:
+            # b = Bid(trader=self, group=self.group, timestamp=timestamp, active=True,
+            #         **a)
+            # b.save()
+            self.addBid(a, timestamp)
+        bids = self.group.get_active_bids()
+        # print(f'NUM BIDS: {len(bids)}')
+        # for i in self.group.get_non_virtuals():
+        #     msg = {i.participant.code: dict(timestamp=timestamp.strftime('%m_%d_%Y_%H_%M_%S'), action='setBids',
+        #                                     bids=bids)}
+        #     _live_send_back(i.participant._session_code, i.participant._index_in_pages,
+        #                     msg)
 
     def cancelBid(self, data, timestamp):
         market = data.get('market')
@@ -348,6 +470,7 @@ class Player(BasePlayer):
             b = bids.first()
             b.contractor = self
             b.active = False
+            b.cancelled = True
             b.closure_timestamp = timestamp
             b.save()
             msg_to_everyone = dict(action='removeBid', bid_id=b.id)
@@ -362,16 +485,18 @@ class Player(BasePlayer):
         b.save()
         self.group.price_update(new_price=b.value, market=b.market)
         b.trader.update_status(b)
+        if b.trader.is_mm:
+            b.trader.post_new_bids(market=b.market)
         self.update_status(b)
-        h = History(group=self.group, bid=b, value=b.value, market=b.market, timestamp=b.closure_timestamp,
-                    time_in_millisecs=b.closure_timestamp.timestamp() * 1000)
-        h.save()
-        msg_to_everyone = dict(action='removeBid', bid_id=bid_id, market=b.market, price=b.value,
-                               history_time=h.time_in_millisecs)
-        msg_to_trader = dict(action='remove_and_update', bid_id=bid_id, status=b.trader.current_status(),
-                             market=b.market, price=b.value, history_time=h.time_in_millisecs)
-        msg_to_contractor = dict(action='remove_and_update', bid_id=bid_id, status=self.current_status(),
-                                 market=b.market, price=b.value, history_time=h.time_in_millisecs)
+        bids = self.group.get_active_bids()
+        msg_to_everyone = dict(action='setBids', bids=bids, market=b.market, price=b.value,
+                               )
+        msg_to_trader = dict(action='setBids', bids=bids, market=b.market, price=b.value,
+                             status=b.trader.current_status(),
+                             )
+        msg_to_contractor = dict(action='setBids', bids=bids, market=b.market, price=b.value,
+                                 status=self.current_status(), )
+
         all_others = [i.id_in_group for i in self.get_others_in_group() if i != b.trader]
         res = {i: msg_to_everyone for i in all_others}
 
@@ -428,8 +553,7 @@ class Player(BasePlayer):
             method = getattr(self, action)
             return method(data, timestamp)
 
-        bids = self.group.bids.filter(active=True).values('trader', 'value', 'type', 'market', 'id', 'trader__virtual')
-        bids = list(bids)
+        bids = self.group.get_active_bids()
         return {
             self.id_in_group: dict(timestamp=timestamp.strftime('%m_%d_%Y_%H_%M_%S'), action='setBids', bids=bids)}
 
@@ -452,6 +576,7 @@ class Bid(djmodels.Model):
     timestamp = djmodels.DateTimeField(null=True)
     closure_timestamp = djmodels.DateTimeField(null=True)
     active = models.BooleanField()
+    cancelled = models.BooleanField(initial=False)
 
 
 class History(djmodels.Model):
@@ -465,3 +590,8 @@ class History(djmodels.Model):
     value = models.FloatField()
     timestamp = djmodels.DateTimeField(null=True)
     time_in_millisecs = models.FloatField()
+
+# @receiver(post_save, sender=History)
+# def monitor_closing_bids(sender, instance, created, *args, **kwargs):
+#     if created and instance.bid.trader.is_mm:
+#         instance.bid.trader.post_new_bids(market=instance.market)
