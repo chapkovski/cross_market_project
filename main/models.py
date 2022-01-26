@@ -9,21 +9,16 @@ from otree.api import (
     currency_range,
 )
 from copy import deepcopy
-
+import numpy as np
 import json
 import random
 from django.db import models as djmodels
 from django.utils import timezone
 from django.db.models import Max, StdDev, Avg
-from pprint import pprint
 from datetime import datetime, timedelta
 from otree.models import Participant
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from uuid import UUID, uuid4
-from otree.live import _live_send_back
-from otree.channels.utils import group_send_wrapper, live_group
-
+from api.utils import mm_wrapper
 """
      await channel_utils.group_send_wrapper(
                 type='room_session_ready',
@@ -50,12 +45,14 @@ def create_scheduled_calls(group, virtuals, day_length):
     timeslots = list(range(1, day_length))
     MAX_CALLS = group.session.config.get('max_calls', 5)
     for v in virtuals:
-        num_calls = random.randint(1, MAX_CALLS)
-        calls = random.choices(timeslots, k=num_calls)
-        for c in calls:
-            eta = datetime.now() + timedelta(seconds=c)
-            h = handle_update.schedule((group.id, v.id), eta=eta)
-            h()
+        if not v.is_mm:
+            num_calls = random.randint(1, MAX_CALLS)
+            calls = random.choices(timeslots, k=num_calls)
+            for c in calls:
+                eta = datetime.now() + timedelta(seconds=c)
+                market = random.choice(Constants.markets)
+                h = handle_update.schedule((group.id, v.id, market), eta=eta)
+                h()
 
 
 class BidType:
@@ -69,6 +66,8 @@ class Constants(BaseConstants):
     num_rounds = 10
     tick_frequency = 5
     markets = ['A', 'B']
+    risk_lb = 0.5
+    risk_ub = 1.0
 
 
 conv = lambda x: [float(i.strip()) for i in x.split(',')]
@@ -91,8 +90,7 @@ class Subsession(BaseSubsession):
         dividends = self.session.vars[f'dividends_{market}']
         mean_dividends = sum(dividends) / len(dividends)
         terminal_value = getattr(self, f'terminal_{market}')
-        print('AAAA', market, terminal_value, mean_dividends,
-              (mean_dividends) * (Constants.num_rounds - self.round_number + 1) + terminal_value)
+
         return (mean_dividends) * (Constants.num_rounds - self.round_number + 1) + terminal_value
 
     def group_by_arrival_time_method(self, waiting_players):
@@ -149,16 +147,13 @@ class Group(BaseGroup):
         best_sell = bids.filter(type='sell').order_by('value').first()
 
         if best_buy and best_sell and best_sell.value > best_buy.value:
-            print(f"{best_buy.value=} {best_sell.value=}")
-            print(f'{(best_sell.value + best_buy.value) / 2=}')
-            print('*' * 100)
             return (best_sell.value + best_buy.value) / 2
         else:
             return getattr(self, f'aux_s_{market}')
 
     @property
-    def market_maker(self):
-        return self.player_set.get(participant__label=MARKET_MAKER_PREFIX)
+    def market_makers(self):
+        return self.player_set.filter(participant__label=MARKET_MAKER_PREFIX)
 
     @property
     def time_left(self):
@@ -183,6 +178,8 @@ class Group(BaseGroup):
         vals = {i: getattr(example_p, i) for i in params}
         vals['_index_in_pages'] = vals['_max_page_index']
         num_virtual_players = self.session.config.get('num_virtual_players', 5)
+        num_mms = self.session.config.get('num_mms', 1)
+        print(num_mms, 'A' * 100)
         virtual_participants = []
         max_id_in_session = Participant.objects.filter(session=self.session).aggregate(Max('id_in_session')).get(
             'id_in_session__max')
@@ -199,16 +196,18 @@ class Group(BaseGroup):
             )
             virtual_participants.append(p)
         new_max_id_in_session = max_id_in_session + num_virtual_players
-        mm = Participant(
-            label=MARKET_MAKER_PREFIX,
-            code=f'{VIRTUAL_PREFIX}{uuid4().hex}',
-            session=self.session,
-            _session_code=self.session.code,
-            id_in_session=new_max_id_in_session + 1,
-            visited=True,
-            **vals
-        )
-        virtual_participants.append(mm)
+        for i in np.linspace(Constants.risk_lb, Constants.risk_ub, num=num_mms):
+            mm = Participant(
+                label=MARKET_MAKER_PREFIX,
+                code=f'{VIRTUAL_PREFIX}{uuid4().hex}',
+                session=self.session,
+                vars=dict(risk_aversion=i),
+                _session_code=self.session.code,
+                id_in_session=new_max_id_in_session + i + 1,
+                visited=True,
+                **vals
+            )
+            virtual_participants.append(mm)
         Participant.objects.bulk_create(virtual_participants)
         virtual_participants = Participant.objects.filter(session=self.session, code__startswith=VIRTUAL_PREFIX)
         self.session.num_participants += len(virtual_participants)
@@ -220,7 +219,8 @@ class Group(BaseGroup):
                 is_mm = p.label == MARKET_MAKER_PREFIX
                 pl = Player(participant=p, session=self.session, subsession=g.subsession, group=g,
                             id_in_group=i + 1 + num_non_virtual, round_number=r, virtual=True,
-                            is_mm=is_mm)
+                            is_mm=is_mm,
+                            risk_aversion=p.vars.get('risk_aversion'))
                 virtual_players.append(pl)
 
         Player.objects.bulk_create(virtual_players)
@@ -237,7 +237,7 @@ class Group(BaseGroup):
         params_A = self.bids.filter(active=False, cancelled=False, market='A').aggregate(Avg('value'), StdDev('value'))
         params_B = self.bids.filter(active=False, cancelled=False, market='B').aggregate(Avg('value'), StdDev('value'))
         self.ex_post_aux_s_A = params_A.get('value__avg')
-        self.ex_post_aux_s_B = params_A.get('value__avg')
+        self.ex_post_aux_s_B = params_B.get('value__avg')
         self.ex_post_sigma_A = params_A.get('value__stddev')
         self.ex_post_sigma_B = params_B.get('value__stddev')
 
@@ -309,11 +309,10 @@ class Group(BaseGroup):
         create_scheduled_calls(self, self.get_virtual_players(), day_length)
         # END OF HUEY BLOCK
         # MMs bids: let's think if this is the best place but PORAE
-        mm = self.market_maker
-        print(self.dynamic_aux_s(market='A'))
-        print('$' * 100)
-        mm.post_new_bids(market='A')
-        mm.post_new_bids(market='B')
+        mms = self.market_makers
+        for mm in mms:
+            mm.post_new_bids(market='A')
+            mm.post_new_bids(market='B')
 
     def get_full_history(self):
         if self.round_number == 1:
@@ -335,6 +334,7 @@ class Group(BaseGroup):
 class Player(BasePlayer):
     virtual = models.BooleanField(initial=False)
     is_mm = models.BooleanField(initial=False)
+    risk_aversion = models.FloatField()  # this is set for MMs only
     intermediary_payoff = models.CurrencyField()
     cash_A = models.FloatField()
     cash_B = models.FloatField()
@@ -439,28 +439,20 @@ class Player(BasePlayer):
     def post_new_bids(self, market):
         if not self.is_mm:
             return
-        eps = 2.5
+        eps = round(random.randrange(1, 30) / 10)
         aux_s = self.group.dynamic_aux_s(market)
+        aux_S=self.group.dynamic_aux_s(market)
+        sigma_mm = getattr(self.group, f'sigma_{market}')
+        resp = mm_wrapper(self.round_number, Constants.num_rounds, aux_S, sigma_mm, self.risk_aversion)
+
         to_add = [
-            dict(type='sell', market=market, value=aux_s + eps, ),
-            dict(type='buy', market=market, value=aux_s - eps, ),
+            dict(type='sell', market=market, value=resp.get('s_ask') ),
+            dict(type='buy', market=market, value=resp.get('s_bid'), ),
 
         ]
         timestamp = timezone.now()
-        bids = self.group.get_active_bids()
-        print(f'NUM BIDS BEFORE: {len(bids)}')
         for a in to_add:
-            # b = Bid(trader=self, group=self.group, timestamp=timestamp, active=True,
-            #         **a)
-            # b.save()
             self.addBid(a, timestamp)
-        bids = self.group.get_active_bids()
-        # print(f'NUM BIDS: {len(bids)}')
-        # for i in self.group.get_non_virtuals():
-        #     msg = {i.participant.code: dict(timestamp=timestamp.strftime('%m_%d_%Y_%H_%M_%S'), action='setBids',
-        #                                     bids=bids)}
-        #     _live_send_back(i.participant._session_code, i.participant._index_in_pages,
-        #                     msg)
 
     def cancelBid(self, data, timestamp):
         market = data.get('market')
@@ -577,21 +569,3 @@ class Bid(djmodels.Model):
     closure_timestamp = djmodels.DateTimeField(null=True)
     active = models.BooleanField()
     cancelled = models.BooleanField(initial=False)
-
-
-class History(djmodels.Model):
-    def as_dict(self):
-        return dict(value=self.bid.value, market=self.bid.market,
-                    id=self.id, group_id=self.group.id)
-
-    group = djmodels.ForeignKey(to=Group, on_delete=djmodels.CASCADE, related_name='history')
-    bid = djmodels.OneToOneField(to=Bid, on_delete=djmodels.CASCADE, related_name='h', null=True)
-    market = models.StringField()
-    value = models.FloatField()
-    timestamp = djmodels.DateTimeField(null=True)
-    time_in_millisecs = models.FloatField()
-
-# @receiver(post_save, sender=History)
-# def monitor_closing_bids(sender, instance, created, *args, **kwargs):
-#     if created and instance.bid.trader.is_mm:
-#         instance.bid.trader.post_new_bids(market=instance.market)

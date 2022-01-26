@@ -2,19 +2,20 @@ from os import environ
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+app_sequence = ['intro','main']
 SESSION_CONFIGS = [
     dict(
         name='market_disjoint',
         display_name="market disjoint",
         num_demo_participants=3,
-        app_sequence=['main'],
+        app_sequence=app_sequence,
         merged=False
     ),
     dict(
         name='market_merged',
         display_name="market merged",
         num_demo_participants=3,
-        app_sequence=['main'],
+        app_sequence=app_sequence,
         merged=True
     ),
 ]
@@ -37,6 +38,7 @@ SESSION_CONFIG_DEFAULTS = dict(
     terminal_A=50.0,
     terminal_B=70.0,
     num_virtual_players=6,
+    num_mms=2,
     max_calls=6,
 
 )
