@@ -187,7 +187,7 @@ class Group(BaseGroup):
         for i in range(num_virtual_players):
             p = Participant(
                 label='VIRTUAL',
-                code=f'{VIRTUAL_PREFIX}{uuid4().hex}',
+                code=f'{VIRTUAL_PREFIX}{uuid4().hex[:10]}',
                 session=self.session,
                 _session_code=self.session.code,
                 id_in_session=i + max_id_in_session,
@@ -199,7 +199,7 @@ class Group(BaseGroup):
         for i in np.linspace(Constants.risk_lb, Constants.risk_ub, num=num_mms):
             mm = Participant(
                 label=MARKET_MAKER_PREFIX,
-                code=f'{VIRTUAL_PREFIX}{uuid4().hex}',
+                code=f'{VIRTUAL_PREFIX}{uuid4().hex[:10]}',
                 session=self.session,
                 vars=dict(risk_aversion=i),
                 _session_code=self.session.code,
