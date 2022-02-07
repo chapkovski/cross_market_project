@@ -1,6 +1,6 @@
 from os import environ
 import os
-
+EXTENSION_APPS = ['main']
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 app_sequence = ['intro','main']
 SESSION_CONFIGS = [
