@@ -413,7 +413,6 @@ class Player(BasePlayer):
             return b.id
 
     def addBid(self, data, timestamp):
-        print('HOW SIGNATURE LIKE IN ADDBID', data)
         bid_type = data.get('type')
         value = data.get('value')
         market = data.get('market')
@@ -551,6 +550,42 @@ class Player(BasePlayer):
 
 
 class Bid(djmodels.Model):
+    def as_dict(self):
+        return dict(trader=self.trader.id, value=self.value, type=self.type, market=self.market, active=self.active,
+                    id=self.id)
+
+    class Meta:
+        ordering = ['timestamp']
+        get_latest_by = 'timestamp'
+
+    group = djmodels.ForeignKey(to=Group, on_delete=djmodels.CASCADE, related_name='bids')
+    trader = djmodels.ForeignKey(to=Player, on_delete=djmodels.CASCADE, related_name='bids')
+    contractor = djmodels.ForeignKey(to=Player, on_delete=djmodels.CASCADE, related_name='contracted_bids', null=True)
+    market = models.StringField()
+    value = models.FloatField()
+    type = models.StringField()
+    timestamp = djmodels.DateTimeField(null=True)
+    closure_timestamp = djmodels.DateTimeField(null=True)
+    active = models.BooleanField()
+    cancelled = models.BooleanField(initial=False)
+
+
+
+class Message(djmodels.Model):
+    class Meta:
+        ordering = ['timestamp']
+        get_latest_by = 'timestamp'
+
+    parent =  djmodels.ForeignKey(to=Bid, on_delete=djmodels.CASCADE, related_name='messages')
+    event_type = models.StringField()
+    direction = models.IntegerField()
+    timestamp = djmodels.DateTimeField(null=True)
+
+
+
+
+
+class OrderBook(djmodels.Model):
     def as_dict(self):
         return dict(trader=self.trader.id, value=self.value, type=self.type, market=self.market, active=self.active,
                     id=self.id)
