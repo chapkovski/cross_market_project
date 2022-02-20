@@ -65,6 +65,8 @@ class MessageExport(View):
             'event_type'
         )
         df = pd.DataFrame(data=events)
+        if df is  None or  df.empty:
+            return redirect(reverse('ExportIndex'))
         df.actor__virtual = df.actor__virtual.astype('int32')
         df.actor__is_mm = df.actor__is_mm.astype('int32')
         df.rename(columns={
@@ -79,16 +81,15 @@ class MessageExport(View):
             'parent__value': 'price',
             'parent__type': 'direction',
         }, inplace=True)
-        if df is not None and not df.empty:
-            timestamp = timezone.now()
-            curtime = timestamp.strftime('%m_%d_%Y_%H_%M_%S')
-            csv_data = df.to_csv(index=False)
-            response = HttpResponse(csv_data, content_type=self.content_type)
-            filename = f'messages_{curtime}.csv'
-            response['Content-Disposition'] = f'attachment; filename={filename}'
-            return response
-        else:
-            return redirect(reverse('ExportIndex'))
+
+        timestamp = timezone.now()
+        curtime = timestamp.strftime('%m_%d_%Y_%H_%M_%S')
+        csv_data = df.to_csv(index=False)
+        response = HttpResponse(csv_data, content_type=self.content_type)
+        filename = f'messages_{curtime}.csv'
+        response['Content-Disposition'] = f'attachment; filename={filename}'
+        return response
+
 
 
 class LongOrderBookExport(View):
