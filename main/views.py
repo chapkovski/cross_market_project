@@ -116,8 +116,8 @@ class LongOrderBookExport(View):
         if df is  None or  df.empty:
             return redirect(reverse('ExportIndex'))
 
-        df.loc[df.type == 'buy', 'altprice'] = df.price
-        df.loc[df.type == 'sell', 'altprice'] = -df.price
+        df.loc[df.type == 'sell', 'altprice'] = df.price
+        df.loc[df.type == 'buy', 'altprice'] = -df.price
         df = df.sort_values(['initiator_id', 'initiator__parent__market', 'altprice'])
         df.drop(['altprice'], axis='columns', inplace=True)
 
@@ -161,8 +161,8 @@ class WideOrderBookExport(View):
         if df is  None or  df.empty:
             return redirect(reverse('ExportIndex'))
 
-        df.loc[df.type == 'buy', 'altprice'] = df.price
-        df.loc[df.type == 'sell', 'altprice'] = -df.price
+        df.loc[df.type == 'sell', 'altprice'] = df.price
+        df.loc[df.type == 'buy', 'altprice'] = -df.price
         df = df.sort_values(['initiator_id', 'initiator__parent__market', 'altprice'])
         df.drop(['altprice'], axis='columns', inplace=True)
 
