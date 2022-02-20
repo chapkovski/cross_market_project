@@ -50,19 +50,35 @@ class MessageExport(View):
     content_type = 'text/csv'
 
     def get(self, request, *args, **kwargs):
-        events = Message.objects.all().values('parent__group__session__code',
-                                              'parent__group__id_in_subsession',
-                                              'parent__group__round_number',
-                                              'actor__participant__code',
-                                              'actor__virtual',
-                                              'actor__is_mm',
-                                              'parent__market',
-                                              'parent__value',
-                                              'parent__type',
-                                              'timestamp',
-                                              'event_type'
-                                              )
+        events = Message.objects.all().values(
+            'id',
+            'parent__group__session__code',
+            'parent__group__id_in_subsession',
+            'parent__group__round_number',
+            'actor__participant__code',
+            'actor__virtual',
+            'actor__is_mm',
+            'parent__market',
+            'parent__value',
+            'parent__type',
+            'timestamp',
+            'event_type'
+        )
         df = pd.DataFrame(data=events)
+        df.actor__virtual = df.actor__virtual.astype('int32')
+        df.actor__is_mm = df.actor__is_mm.astype('int32')
+        df.rename(columns={
+            'id': 'message_id',
+            'parent__group__session__code': 'session code',
+            'parent__group__id_in_subsession': 'group id',
+            'parent__group__round_number': 'round',
+            'actor__participant__code': 'participant code',
+            'actor__virtual': 'virtual',
+            'actor__is_mm': 'market maker',
+            'parent__market': 'market',
+            'parent__value': 'price',
+            'parent__type': 'direction',
+        }, inplace=True)
         if df is not None and not df.empty:
             timestamp = timezone.now()
             curtime = timestamp.strftime('%m_%d_%Y_%H_%M_%S')
@@ -83,10 +99,57 @@ class LongOrderBookExport(View):
 
     def get(self, request, *args, **kwargs):
         events = OrderBook.objects.all().values(
-            # 'initiator__timestamp',
             'initiator_id',
-            'initiator_id__parent__market',
-            # 'initiator_id__event_type',
+            'initiator__timestamp',
+            'initiator__parent__market',
+            'initiator__parent__group__session__code',
+            'initiator__parent__group__id_in_subsession',
+            'initiator__parent__group__round_number',
+            'initiator__actor__participant__code',
+            'initiator__event_type',
+            'price',
+            'type'
+        )
+        df = pd.DataFrame(data=events)
+        df.loc[df.type == 'buy', 'altprice'] = df.price
+        df.loc[df.type == 'sell', 'altprice'] = -df.price
+        df = df.sort_values(['initiator_id', 'initiator__parent__market', 'altprice'])
+        df.drop(['altprice'], axis='columns', inplace=True)
+
+        df.rename(columns={
+            'initiator_id': 'message_id',
+            'initiator__timestamp': 'message timestamp',
+            'initiator__parent__market': 'market',
+            'initiator__parent__group__session__code': 'session code',
+            'initiator__parent__group__id_in_subsession': 'group id',
+            'initiator__parent__group__round_number': 'round',
+            'initiator__actor__participant__code': 'participant code',
+            'initiator__event_type': 'event type',
+            'type': 'direction',
+        }, inplace=True)
+        if df is not None and not df.empty:
+            timestamp = timezone.now()
+            curtime = timestamp.strftime('%m_%d_%Y_%H_%M_%S')
+            csv_data = df.to_csv(index=False)
+            response = HttpResponse(csv_data, content_type=self.content_type)
+            filename = f'long_orderbook_{curtime}.csv'
+            response['Content-Disposition'] = f'attachment; filename={filename}'
+            return response
+        else:
+            return redirect(reverse('ExportIndex'))
+
+
+class WideOrderBookExport(View):
+    display_name = 'Order book export (wide format)'
+    url_name = 'export_orderbook_wide'
+    url_pattern = fr'orderbook_wide/export'
+    content_type = 'text/csv'
+
+    def get(self, request, *args, **kwargs):
+        events = OrderBook.objects.all().values(
+            'initiator__timestamp',
+            'initiator_id',
+            'initiator__parent__market',
             'price',
             'type'
         )
@@ -94,27 +157,32 @@ class LongOrderBookExport(View):
 
         df.loc[df.type == 'buy', 'altprice'] = df.price
         df.loc[df.type == 'sell', 'altprice'] = -df.price
-        df = df.sort_values(['initiator_id',  'initiator_id__parent__market', 'altprice'])
+        df = df.sort_values(['initiator_id', 'initiator__parent__market', 'altprice'])
         df.drop(['altprice'], axis='columns', inplace=True)
 
-        print(df.head())
-        df['bidnum'] = df.groupby(['initiator_id', 'initiator_id__parent__market', 'type']).cumcount()
 
+        df['bidnum'] = df.groupby(['initiator_id', 'initiator__parent__market', 'type']).cumcount()
 
         p = df.pivot_table(
-            index=['initiator_id', 'initiator_id__parent__market'],
+            index=['initiator_id', 'initiator__timestamp','initiator__parent__market'],
             columns=['type', 'bidnum'],
             values='price'
         )
         p.columns = p.columns.map('{0[0]}_{0[1]}'.format)
-        print(p.head())
-        return redirect(reverse('ExportIndex'))
-        if df is not None and not df.empty:
+        p.reset_index(level=['initiator_id', 'initiator__timestamp','initiator__parent__market'],inplace=True)
+        p.rename(columns={
+            'initiator_id': 'message_id',
+            'initiator__timestamp': 'message timestamp',
+            'initiator__parent__market': 'market',
+            'type': 'direction',
+        }, inplace=True)
+        print(p.head(100))
+        if p is not None and not p.empty:
             timestamp = timezone.now()
             curtime = timestamp.strftime('%m_%d_%Y_%H_%M_%S')
-            csv_data = df.to_csv(index=False)
+            csv_data = p.to_csv(index=False)
             response = HttpResponse(csv_data, content_type=self.content_type)
-            filename = f'messages_{curtime}.csv'
+            filename = f'wide_orderbook_{curtime}.csv'
             response['Content-Disposition'] = f'attachment; filename={filename}'
             return response
         else:
