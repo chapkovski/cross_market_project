@@ -130,16 +130,15 @@ class LongOrderBookExport(View):
             'initiator__event_type': 'event type',
             'type': 'direction',
         }, inplace=True)
-        if df is not None and not df.empty:
-            timestamp = timezone.now()
-            curtime = timestamp.strftime('%m_%d_%Y_%H_%M_%S')
-            csv_data = df.to_csv(index=False)
-            response = HttpResponse(csv_data, content_type=self.content_type)
-            filename = f'long_orderbook_{curtime}.csv'
-            response['Content-Disposition'] = f'attachment; filename={filename}'
-            return response
-        else:
-            return redirect(reverse('ExportIndex'))
+
+        timestamp = timezone.now()
+        curtime = timestamp.strftime('%m_%d_%Y_%H_%M_%S')
+        csv_data = df.to_csv(index=False)
+        response = HttpResponse(csv_data, content_type=self.content_type)
+        filename = f'long_orderbook_{curtime}.csv'
+        response['Content-Disposition'] = f'attachment; filename={filename}'
+        return response
+
 
 
 class WideOrderBookExport(View):
@@ -157,6 +156,8 @@ class WideOrderBookExport(View):
             'type'
         )
         df = pd.DataFrame(data=events)
+        if df is  None or  df.empty:
+            return redirect(reverse('ExportIndex'))
 
         df.loc[df.type == 'buy', 'altprice'] = df.price
         df.loc[df.type == 'sell', 'altprice'] = -df.price
