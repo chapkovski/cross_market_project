@@ -111,6 +111,9 @@ class LongOrderBookExport(View):
             'type'
         )
         df = pd.DataFrame(data=events)
+        if df is  None or  df.empty:
+            return redirect(reverse('ExportIndex'))
+
         df.loc[df.type == 'buy', 'altprice'] = df.price
         df.loc[df.type == 'sell', 'altprice'] = -df.price
         df = df.sort_values(['initiator_id', 'initiator__parent__market', 'altprice'])
