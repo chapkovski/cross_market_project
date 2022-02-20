@@ -67,6 +67,7 @@ class MessageExport(View):
         df = pd.DataFrame(data=events)
         if df is  None or  df.empty:
             return redirect(reverse('ExportIndex'))
+        df = df.sort_values(['id'])
         df.actor__virtual = df.actor__virtual.astype('int32')
         df.actor__is_mm = df.actor__is_mm.astype('int32')
         df.rename(columns={
@@ -181,7 +182,7 @@ class WideOrderBookExport(View):
             'initiator__parent__market': 'market',
             'type': 'direction',
         }, inplace=True)
-        print(p.head(100))
+
         if p is not None and not p.empty:
             timestamp = timezone.now()
             curtime = timestamp.strftime('%m_%d_%Y_%H_%M_%S')
