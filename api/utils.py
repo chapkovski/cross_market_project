@@ -124,6 +124,7 @@ def noise_trading_posting_quotes(tt, fundamental_value, phi, kappa, alfa, aux_p1
 
     direction = rng.binomial(1, max(0.5 - phi * tt, 0))
     u1 = kappa * fundamental_value * rng.random()
+    print(f'{alfa=},{u1=},{aux_p1=}')
     quote = (1 - alfa) * u1 + alfa * aux_p1
     return dict(direction=direction, quote=quote)
 
