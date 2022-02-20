@@ -19,6 +19,9 @@ from datetime import datetime, timedelta
 from otree.models import Participant
 from uuid import UUID, uuid4
 from api.utils import mm_wrapper
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
 """
      await channel_utils.group_send_wrapper(
                 type='room_session_ready',
@@ -58,6 +61,12 @@ def create_scheduled_calls(group, virtuals, day_length):
 class BidType:
     sell = 'sell'
     buy = 'buy'
+
+
+class EventType:
+    SUBMISSION = 'Submission'
+    EXECUTION = 'Execution'
+    CANCELLATION = 'Cancellation'
 
 
 class Constants(BaseConstants):
@@ -102,12 +111,6 @@ class Subsession(BaseSubsession):
         c = self.session.config
         dividends_A = conv(c.get('dividends_A'))
         dividends_B = conv(c.get('dividends_B'))
-        # LETS TRY TO GET SOMETHIGN FROM MATLAB?
-        print('----MATLAB----')
-        # pprint(get_mm_bids(self.round_number, Constants.num_rounds, 100, 0.5))
-        # pprint(get_nt_quote(round_number=self.round_number, num_rounds=Constants.num_rounds, prev_price=100, dividends=dividends_A))
-        print('----MATLAB----')
-
         self.terminal_A = c.get('terminal_A')
         self.terminal_B = c.get('terminal_B')
 
@@ -438,14 +441,12 @@ class Player(BasePlayer):
     def post_new_bids(self, market):
         if not self.is_mm:
             return
-        eps = round(random.randrange(1, 30) / 10)
-        aux_s = self.group.dynamic_aux_s(market)
-        aux_S=self.group.dynamic_aux_s(market)
+        aux_S = self.group.dynamic_aux_s(market)
         sigma_mm = getattr(self.group, f'sigma_{market}')
         resp = mm_wrapper(self.round_number, Constants.num_rounds, aux_S, sigma_mm, self.risk_aversion)
 
         to_add = [
-            dict(type='sell', market=market, value=resp.get('s_ask') ),
+            dict(type='sell', market=market, value=resp.get('s_ask')),
             dict(type='buy', market=market, value=resp.get('s_bid'), ),
 
         ]
@@ -523,16 +524,6 @@ class Player(BasePlayer):
         self.optional_data_setter(market_data, 'A', 'shares')
         self.optional_data_setter(market_data, 'B', 'shares')
 
-    def scheduled_virtual_action(self, data, timestamp):
-        # TODO: here we ll inject the matlab call to define to which market we'll put a bid or ask
-        # TODO on behalf of the virtual player
-        # TODO: and at which size. Right now let's do something naive: a virtual player will put a bit/ask slightly
-        # higher or lower than the current market price.
-        print('whos calling??', self.id, data)
-        virtual = Player.objects.get(id=data.get('virtual_player_id'))
-
-        return {0: {'action': 'from_huey', 'who_is_this': data.get('virtual_player_id')}}
-
     def register_event(self, data):
         action = data.get('action', '')
         market_data = data.pop('marketData', None)
@@ -570,37 +561,40 @@ class Bid(djmodels.Model):
     cancelled = models.BooleanField(initial=False)
 
 
-
 class Message(djmodels.Model):
     class Meta:
         ordering = ['timestamp']
         get_latest_by = 'timestamp'
-
-    parent =  djmodels.ForeignKey(to=Bid, on_delete=djmodels.CASCADE, related_name='messages')
+    actor = djmodels.ForeignKey(to=Player, on_delete=djmodels.CASCADE, related_name='messages')
+    parent = djmodels.ForeignKey(to=Bid, on_delete=djmodels.CASCADE, related_name='messages')
     event_type = models.StringField()
-    direction = models.IntegerField()
     timestamp = djmodels.DateTimeField(null=True)
-
-
 
 
 
 class OrderBook(djmodels.Model):
-    def as_dict(self):
-        return dict(trader=self.trader.id, value=self.value, type=self.type, market=self.market, active=self.active,
-                    id=self.id)
-
-    class Meta:
-        ordering = ['timestamp']
-        get_latest_by = 'timestamp'
-
-    group = djmodels.ForeignKey(to=Group, on_delete=djmodels.CASCADE, related_name='bids')
-    trader = djmodels.ForeignKey(to=Player, on_delete=djmodels.CASCADE, related_name='bids')
-    contractor = djmodels.ForeignKey(to=Player, on_delete=djmodels.CASCADE, related_name='contracted_bids', null=True)
-    market = models.StringField()
-    value = models.FloatField()
+    initiator =djmodels.ForeignKey(to=Message, on_delete=djmodels.CASCADE, related_name='orders')
+    price = models.FloatField()
     type = models.StringField()
-    timestamp = djmodels.DateTimeField(null=True)
-    closure_timestamp = djmodels.DateTimeField(null=True)
-    active = models.BooleanField()
-    cancelled = models.BooleanField(initial=False)
+
+@receiver(post_save, sender=Bid)
+def save_profile(sender, instance, created, **kwargs):
+    if created:
+        params = dict(actor=instance.trader,
+                      event_type=EventType.SUBMISSION,
+                      timestamp=instance.timestamp)
+    else:
+        if instance.closure_timestamp and not instance.active:
+            if instance.cancelled:
+                params = dict(actor=instance.contractor,
+                              event_type=EventType.CANCELLATION,
+                              timestamp=instance.closure_timestamp)
+            else:
+                params = dict(actor=instance.contractor,
+                              event_type=EventType.EXECUTION,
+                              timestamp=instance.closure_timestamp)
+    m = instance.messages.create(**params)
+    bids = instance.group.bids.filter(active=True, market=instance.market).values('value', 'type')
+    orders = [OrderBook(initiator=m, price=i.get('value'), type=i.get('type')) for i in bids]
+    OrderBook.objects.bulk_create(orders)
+

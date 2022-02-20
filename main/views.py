@@ -1,12 +1,12 @@
 from django.views.generic import View
 from django.http import HttpResponse
-from .models import Bid
+from .models import Bid, Message, OrderBook
 from django.shortcuts import redirect, reverse
 import pandas as pd
 from django.utils import timezone
 
 
-class PandasExport(View):
+class BidExport(View):
     display_name = 'Bids export'
     url_name = 'export_bids'
     url_pattern = fr'bids/export'
@@ -37,6 +37,84 @@ class PandasExport(View):
             csv_data = df.to_csv(index=False)
             response = HttpResponse(csv_data, content_type=self.content_type)
             filename = f'bids_{curtime}.csv'
+            response['Content-Disposition'] = f'attachment; filename={filename}'
+            return response
+        else:
+            return redirect(reverse('ExportIndex'))
+
+
+class MessageExport(View):
+    display_name = 'Messages export'
+    url_name = 'export_messages'
+    url_pattern = fr'message/export'
+    content_type = 'text/csv'
+
+    def get(self, request, *args, **kwargs):
+        events = Message.objects.all().values('parent__group__session__code',
+                                              'parent__group__id_in_subsession',
+                                              'parent__group__round_number',
+                                              'actor__participant__code',
+                                              'actor__virtual',
+                                              'actor__is_mm',
+                                              'parent__market',
+                                              'parent__value',
+                                              'parent__type',
+                                              'timestamp',
+                                              'event_type'
+                                              )
+        df = pd.DataFrame(data=events)
+        if df is not None and not df.empty:
+            timestamp = timezone.now()
+            curtime = timestamp.strftime('%m_%d_%Y_%H_%M_%S')
+            csv_data = df.to_csv(index=False)
+            response = HttpResponse(csv_data, content_type=self.content_type)
+            filename = f'messages_{curtime}.csv'
+            response['Content-Disposition'] = f'attachment; filename={filename}'
+            return response
+        else:
+            return redirect(reverse('ExportIndex'))
+
+
+class LongOrderBookExport(View):
+    display_name = 'Order book export (long format)'
+    url_name = 'export_orderbook_long'
+    url_pattern = fr'orderbook_long/export'
+    content_type = 'text/csv'
+
+    def get(self, request, *args, **kwargs):
+        events = OrderBook.objects.all().values(
+            # 'initiator__timestamp',
+            'initiator_id',
+            'initiator_id__parent__market',
+            # 'initiator_id__event_type',
+            'price',
+            'type'
+        )
+        df = pd.DataFrame(data=events)
+
+        df.loc[df.type == 'buy', 'altprice'] = df.price
+        df.loc[df.type == 'sell', 'altprice'] = -df.price
+        df = df.sort_values(['initiator_id',  'initiator_id__parent__market', 'altprice'])
+        df.drop(['altprice'], axis='columns', inplace=True)
+
+        print(df.head())
+        df['bidnum'] = df.groupby(['initiator_id', 'initiator_id__parent__market', 'type']).cumcount()
+
+
+        p = df.pivot_table(
+            index=['initiator_id', 'initiator_id__parent__market'],
+            columns=['type', 'bidnum'],
+            values='price'
+        )
+        p.columns = p.columns.map('{0[0]}_{0[1]}'.format)
+        print(p.head())
+        return redirect(reverse('ExportIndex'))
+        if df is not None and not df.empty:
+            timestamp = timezone.now()
+            curtime = timestamp.strftime('%m_%d_%Y_%H_%M_%S')
+            csv_data = df.to_csv(index=False)
+            response = HttpResponse(csv_data, content_type=self.content_type)
+            filename = f'messages_{curtime}.csv'
             response['Content-Disposition'] = f'attachment; filename={filename}'
             return response
         else:
