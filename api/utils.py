@@ -1,8 +1,9 @@
 import numpy as np
 from scipy.linalg import expm
 from math import log
+import logging
 
-
+logger = logging.getLogger(__name__)
 def aux_func_v_mm(q, tt, Q, M, T):
     """
 
@@ -134,10 +135,11 @@ def nt_quote_wrapper(round_number, fundamental_value, aux_S):
                                         alfa=0.85, )
 
 
-def mm_wrapper(round_number, num_rounds, aux_S, sigma_mm,  risk_aversion):
-    return market_maker_posting_quotes(A=10, risk_aversion_MM=risk_aversion, kappa_mm=1, Q=30, q_mm=2, sigma_mm=sigma_mm,
+def mm_wrapper(round_number, num_rounds, aux_S, sigma_mm,  risk_aversion, q_mm):
+    res =  market_maker_posting_quotes(A=10, risk_aversion_MM=risk_aversion, kappa_mm=1, Q=30, q_mm=q_mm, sigma_mm=sigma_mm,
                                        aux_S=aux_S, tt=round_number, T=num_rounds)
-
+    logger.info(f'MM returns {res}. Other params: {risk_aversion=}; {q_mm=}; {sigma_mm=}; {aux_S}; {round_number=};{num_rounds=}')
+    return res
 
 if __name__ == '__main__':
     res = market_maker_posting_quotes(A=10, risk_aversion_MM=.5, kappa_mm=1, Q=30, q_mm=2, sigma_mm=.5,

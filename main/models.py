@@ -284,8 +284,13 @@ class Group(BaseGroup):
             for p in self.get_players():
                 p.cash_A = initial_money_A
                 p.cash_B = initial_money_B
-                p.shares_A = initial_shares_A
-                p.shares_B = initial_shares_B
+                if p.is_mm:
+                    p.shares_A = 0
+                    p.shares_B = 0
+                else:
+                    p.shares_A = initial_shares_A
+                    p.shares_B = initial_shares_B
+
         else:
 
             for p in self.get_players():
@@ -443,7 +448,8 @@ class Player(BasePlayer):
             return
         aux_S = self.group.dynamic_aux_s(market)
         sigma_mm = getattr(self.group, f'sigma_{market}')
-        resp = mm_wrapper(self.round_number, Constants.num_rounds, aux_S, sigma_mm, self.risk_aversion)
+        q_mm = getattr(self, f'shares_{market}')
+        resp = mm_wrapper(self.round_number, Constants.num_rounds, aux_S, sigma_mm, self.risk_aversion, q_mm=q_mm)
 
         to_add = [
             dict(type='sell', market=market, value=resp.get('s_ask')),
