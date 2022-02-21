@@ -239,10 +239,10 @@ class Group(BaseGroup):
     def set_ex_post_values(self):
         params_A = self.bids.filter(active=False, cancelled=False, market='A').aggregate(Avg('value'), StdDev('value'))
         params_B = self.bids.filter(active=False, cancelled=False, market='B').aggregate(Avg('value'), StdDev('value'))
-        self.ex_post_aux_s_A = params_A.get('value__avg')
-        self.ex_post_aux_s_B = params_B.get('value__avg')
-        self.ex_post_sigma_A = params_A.get('value__stddev')
-        self.ex_post_sigma_B = params_B.get('value__stddev')
+        self.ex_post_aux_s_A = params_A.get('value__avg', self.subsession.fv('A'))
+        self.ex_post_aux_s_B = params_B.get('value__avg', self.subsession.fv('B'))
+        self.ex_post_sigma_A = params_A.get('value__stddev', 0)
+        self.ex_post_sigma_B = params_B.get('value__stddev', 0)
 
     def set_group_params(self):
         # a bit naive, but will work taking into account that we rely on this code to correclty calculate the scheduled call.
@@ -565,17 +565,18 @@ class Message(djmodels.Model):
     class Meta:
         ordering = ['timestamp']
         get_latest_by = 'timestamp'
+
     actor = djmodels.ForeignKey(to=Player, on_delete=djmodels.CASCADE, related_name='messages')
     parent = djmodels.ForeignKey(to=Bid, on_delete=djmodels.CASCADE, related_name='messages')
     event_type = models.StringField()
     timestamp = djmodels.DateTimeField(null=True)
 
 
-
 class OrderBook(djmodels.Model):
-    initiator =djmodels.ForeignKey(to=Message, on_delete=djmodels.CASCADE, related_name='orders')
+    initiator = djmodels.ForeignKey(to=Message, on_delete=djmodels.CASCADE, related_name='orders')
     price = models.FloatField()
     type = models.StringField()
+
 
 @receiver(post_save, sender=Bid)
 def save_profile(sender, instance, created, **kwargs):
@@ -597,4 +598,3 @@ def save_profile(sender, instance, created, **kwargs):
     bids = instance.group.bids.filter(active=True, market=instance.market).values('value', 'type')
     orders = [OrderBook(initiator=m, price=i.get('value'), type=i.get('type')) for i in bids]
     OrderBook.objects.bulk_create(orders)
-
