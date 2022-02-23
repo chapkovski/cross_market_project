@@ -89,6 +89,18 @@ class Subsession(BaseSubsession):
     terminal_B = models.FloatField()
     dividends_A = models.StringField()
     dividends_B = models.StringField()
+    fv_A = models.FloatField()
+    fv_B = models.FloatField()
+
+    def set_fv(self, market):
+        """
+        setting fv
+        """
+        dividends = self.session.vars[f'dividends_{market}']
+        mean_dividends = sum(dividends) / len(dividends)
+        terminal_value = getattr(self, f'terminal_{market}')
+        fv = (mean_dividends) * (Constants.num_rounds - self.round_number + 1) + terminal_value
+        setattr(self, f'fv_{market}', fv)
 
     def fv(self, market):
         """
@@ -96,11 +108,7 @@ class Subsession(BaseSubsession):
         :param market: market name (A, B)
         :return: fundamental value
         """
-        dividends = self.session.vars[f'dividends_{market}']
-        mean_dividends = sum(dividends) / len(dividends)
-        terminal_value = getattr(self, f'terminal_{market}')
-
-        return (mean_dividends) * (Constants.num_rounds - self.round_number + 1) + terminal_value
+        return getattr(self, f'fv_{market}')
 
     def group_by_arrival_time_method(self, waiting_players):
         group_size = self.session.config.get('group_size')
@@ -121,7 +129,8 @@ class Subsession(BaseSubsession):
 
         self.tick_frequency = Constants.tick_frequency  # TODO: move to session config later on
         self.merged = int(self.session.config.get('merged', False))
-
+        self.set_fv('A')
+        self.set_fv('B')
 
 class Group(BaseGroup):
     aux_s_A = models.FloatField()  # average price of the asset A in the previous period (for round 1 - FV)
