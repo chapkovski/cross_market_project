@@ -12,7 +12,7 @@ def handle_update(group_id, virtual_id, market):
     # Check for attainability: inventory condition (cash and shares) and one-side condition (they can post to only
     group = Group.objects.get(id=group_id)
     aux_s = getattr(group, f'aux_s_{market}')
-    quote = nt_quote_wrapper(virtual.round_number, virtual.subsession.fv(market), aux_s)
+    quote = nt_quote_wrapper(virtual.round_number, virtual.subsession.fv(market), aux_s, Constants.num_rounds, market)
     bid_type = bid_types[quote.get('direction')]
     timestamp = timezone.now()
     data = dict(type=bid_type, market=market, value=round(quote.get('quote'),2))

@@ -4,6 +4,16 @@ from math import log
 import logging
 
 logger = logging.getLogger(__name__)
+
+NT_MARKET_PARAMS = dict(A=dict(T=0.25,
+                               alfa=0.8499,
+                               kappa=4.1946
+                               ),
+                        B=dict(T=0,
+                               alfa=1-0.8499,
+                               kappa=2))
+
+
 def aux_func_v_mm(q, tt, Q, M, T):
     """
 
@@ -95,7 +105,7 @@ def market_maker_posting_quotes(A, risk_aversion_MM, kappa_mm, Q, q_mm, sigma_mm
         s_bid = 0.01
 
     s_ask = aux_S + +log(v_mm(q_mm, tt) / v_mm(q_mm - 1, tt)) / kappa_mm + +aux_term3
-    return dict(s_bid=round(s_bid,2), s_ask=round(s_ask,2))
+    return dict(s_bid=round(s_bid, 2), s_ask=round(s_ask, 2))
 
 
 def noise_trading_posting_quotes(tt, fundamental_value, phi, kappa, alfa, aux_p1):
@@ -130,16 +140,24 @@ def noise_trading_posting_quotes(tt, fundamental_value, phi, kappa, alfa, aux_p1
     return dict(direction=direction, quote=quote)
 
 
-def nt_quote_wrapper(round_number, fundamental_value, aux_S):
-    return noise_trading_posting_quotes(tt=round_number, fundamental_value=fundamental_value, aux_p1=aux_S, phi=0, kappa=2,
-                                        alfa=0.85, )
+def nt_quote_wrapper(round_number, fundamental_value, aux_S, num_rounds, market):
+    params = NT_MARKET_PARAMS[market].copy()
+    params['phi'] = params.get('T', 0)/num_rounds
+    params.pop('T', None)
+    return noise_trading_posting_quotes(tt=round_number,
+                                        fundamental_value=fundamental_value,
+                                        aux_p1=aux_S,
+                                        **params)
 
 
-def mm_wrapper(round_number, num_rounds, aux_S, sigma_mm,  risk_aversion, q_mm):
-    res =  market_maker_posting_quotes(A=10, risk_aversion_MM=risk_aversion, kappa_mm=1, Q=30, q_mm=q_mm, sigma_mm=sigma_mm,
-                                       aux_S=aux_S, tt=round_number, T=num_rounds)
-    logger.info(f'MM returns {res}. Other params: {risk_aversion=}; {q_mm=}; {sigma_mm=}; {aux_S}; {round_number=};{num_rounds=}')
+def mm_wrapper(round_number, num_rounds, aux_S, sigma_mm, risk_aversion, q_mm):
+    res = market_maker_posting_quotes(A=10, risk_aversion_MM=risk_aversion, kappa_mm=1, Q=30, q_mm=q_mm,
+                                      sigma_mm=sigma_mm,
+                                      aux_S=aux_S, tt=round_number, T=num_rounds)
+    logger.info(
+        f'MM returns {res}. Other params: {risk_aversion=}; {q_mm=}; {sigma_mm=}; {aux_S}; {round_number=};{num_rounds=}')
     return res
+
 
 if __name__ == '__main__':
     res = market_maker_posting_quotes(A=10, risk_aversion_MM=.5, kappa_mm=1, Q=30, q_mm=2, sigma_mm=.5,
