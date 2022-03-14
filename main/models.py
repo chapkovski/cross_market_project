@@ -8,7 +8,8 @@ from otree.api import (
     Currency as c,
     currency_range,
 )
-from copy import deepcopy
+import logging
+logger = logging.getLogger(__name__)
 import numpy as np
 import json
 import random
@@ -131,6 +132,7 @@ class Subsession(BaseSubsession):
         self.merged = int(self.session.config.get('merged', False))
         self.set_fv('A')
         self.set_fv('B')
+
 
 class Group(BaseGroup):
     aux_s_A = models.FloatField()  # average price of the asset A in the previous period (for round 1 - FV)
@@ -430,27 +432,42 @@ class Player(BasePlayer):
             return b.id
 
     def addBid(self, data, timestamp):
+        check_status = not self.is_mm
+        transaction_allowed = self.is_mm
         bid_type = data.get('type')
         value = data.get('value')
         market = data.get('market')
         counterparts = None
         if bid_type == 'sell':
+            if check_status:
+                shares = getattr(self, f'shares_{market}')
+                transaction_allowed = shares > 0
             counterparts = self.group.bids.filter(type='buy', active=True, value__gte=value, market=market)
         if bid_type == 'buy':
-            counterparts = self.group.bids.filter(type='sell', active=True, value__lte=value, market=market)
-        if counterparts and counterparts.exists():
-            counterpart = counterparts.first()
-            data['bid_id'] = counterpart.id
+            if check_status:
+                if self.subsession.merged:
+                    transaction_allowed = self.total_cash() >= value
+                else:
+                    transaction_allowed = getattr(self, f'cash_{market}') >= value
 
-            return self.takeBid(data, timestamp)
-        removal_info = dict(bid_to_remove=self.inner_cancel_bid(data, timestamp))
-        injector = data.copy()
-        injector.pop('action', None)
-        injector.pop('trader_id', None)
-        b = Bid(trader=self, group=self.group, timestamp=timestamp, active=True,
-                **injector)
-        b.save()
-        return {0: dict(action='addBid', bid=b.as_dict(), **removal_info)}
+            counterparts = self.group.bids.filter(type='sell', active=True, value__lte=value, market=market)
+        if transaction_allowed:
+            logger.info(f'TRANSACTION ALLOWED for {self.participant.code}: data: {json.dumps(data)}')
+            if counterparts and counterparts.exists():
+                counterpart = counterparts.first()
+                data['bid_id'] = counterpart.id
+                return self.takeBid(data, timestamp)
+            removal_info = dict(bid_to_remove=self.inner_cancel_bid(data, timestamp))
+            injector = data.copy()
+            injector.pop('action', None)
+            injector.pop('trader_id', None)
+            b = Bid(trader=self, group=self.group, timestamp=timestamp, active=True,
+                    **injector)
+            b.save()
+            return {0: dict(action='addBid', bid=b.as_dict(), **removal_info)}
+        else:
+            logger.warning(f'TRANSACTION  **NOT** ALLOWED for {self.participant.code}: data: {json.dumps(data)}')
+
 
     def post_new_bids(self, market):
         if not self.is_mm:
