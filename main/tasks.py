@@ -4,7 +4,7 @@ from otree.live import live_payload_function, _live_send_back
 from api.utils import nt_quote_wrapper
 from main.models import Group, Player, Constants, BidType
 from django.utils import timezone
-bid_types = ['buy', 'sell']
+bid_types = [ 'sell', 'buy']
 
 @db_task()
 def handle_update(group_id, virtual_id, market):
