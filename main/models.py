@@ -442,7 +442,7 @@ class Player(BasePlayer):
             if check_status:
                 shares = getattr(self, f'shares_{market}')
                 transaction_allowed = shares > 0
-            counterparts = self.group.bids.filter(type='buy', active=True, value__gte=value, market=market)
+            counterparts = self.group.bids.filter(type='buy', active=True, value__gte=value, market=market).order_by('-value')
         if bid_type == 'buy':
             if check_status:
                 if self.subsession.merged:
@@ -450,7 +450,7 @@ class Player(BasePlayer):
                 else:
                     transaction_allowed = getattr(self, f'cash_{market}') >= value
 
-            counterparts = self.group.bids.filter(type='sell', active=True, value__lte=value, market=market)
+            counterparts = self.group.bids.filter(type='sell', active=True, value__lte=value, market=market).order_by('value')
         if transaction_allowed:
             logger.info(f'TRANSACTION ALLOWED for {self.participant.code}: data: {json.dumps(data)}')
             if counterparts and counterparts.exists():
