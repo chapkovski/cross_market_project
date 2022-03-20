@@ -9,6 +9,7 @@ from otree.api import (
     currency_range,
 )
 import logging
+
 logger = logging.getLogger(__name__)
 import numpy as np
 import json
@@ -378,6 +379,9 @@ class Player(BasePlayer):
         self.dividend_B_payoff = self.shares_B * self.group.dividend_B
         self.stocks_A_payoff = self.dividend_A_payoff + self.subsession.terminal_A * self.shares_A
         self.stocks_B_payoff = self.dividend_B_payoff + self.subsession.terminal_B * self.shares_B
+        self.cash_A+=self.dividend_A_payoff
+        self.cash_B+=self.dividend_B_payoff
+
         self.cash_payoff = self.total_cash()
         self.intermediary_payoff = self.total_cash() + self.stocks_A_payoff + self.stocks_B_payoff
 
@@ -442,7 +446,8 @@ class Player(BasePlayer):
             if check_status:
                 shares = getattr(self, f'shares_{market}')
                 transaction_allowed = shares > 0
-            counterparts = self.group.bids.filter(type='buy', active=True, value__gte=value, market=market).order_by('-value')
+            counterparts = self.group.bids.filter(type='buy', active=True, value__gte=value, market=market).order_by(
+                '-value')
         if bid_type == 'buy':
             if check_status:
                 if self.subsession.merged:
@@ -450,7 +455,8 @@ class Player(BasePlayer):
                 else:
                     transaction_allowed = getattr(self, f'cash_{market}') >= value
 
-            counterparts = self.group.bids.filter(type='sell', active=True, value__lte=value, market=market).order_by('value')
+            counterparts = self.group.bids.filter(type='sell', active=True, value__lte=value, market=market).order_by(
+                'value')
         if transaction_allowed:
             logger.info(f'TRANSACTION ALLOWED for {self.participant.code}: data: {json.dumps(data)}')
             if counterparts and counterparts.exists():
@@ -467,7 +473,6 @@ class Player(BasePlayer):
             return {0: dict(action='addBid', bid=b.as_dict(), **removal_info)}
         else:
             logger.warning(f'TRANSACTION  **NOT** ALLOWED for {self.participant.code}: data: {json.dumps(data)}')
-
 
     def post_new_bids(self, market):
         if not self.is_mm:
@@ -615,18 +620,20 @@ def save_profile(sender, instance, created, **kwargs):
     if created:
         params = dict(actor=instance.trader,
                       event_type=EventType.SUBMISSION,
-                      timestamp=instance.timestamp)
+                      )
     else:
         if instance.closure_timestamp and not instance.active:
             if instance.cancelled:
                 params = dict(actor=instance.contractor,
                               event_type=EventType.CANCELLATION,
-                              timestamp=instance.closure_timestamp)
+                              )
             else:
                 params = dict(actor=instance.contractor,
                               event_type=EventType.EXECUTION,
-                              timestamp=instance.closure_timestamp)
+                              )
+    now = timezone.now()
+    params['timestamp'] = now
     m = instance.messages.create(**params)
-    bids = instance.group.bids.filter(active=True, market=instance.market).values('value', 'type')
+    bids = instance.group.bids.filter(active=True, market=instance.market, timestamp__lte=now).values('value', 'type')
     orders = [OrderBook(initiator=m, price=i.get('value'), type=i.get('type')) for i in bids]
     OrderBook.objects.bulk_create(orders)
