@@ -9,7 +9,7 @@ from otree.api import (
     currency_range,
 )
 import logging
-
+from django.db import transaction
 logger = logging.getLogger(__name__)
 import numpy as np
 import json
@@ -507,29 +507,30 @@ class Player(BasePlayer):
 
     def takeBid(self, data, timestamp):
         bid_id = data.get('bid_id')
-        b = Bid.objects.get(id=bid_id)
-        b.contractor = self
-        b.active = False
-        b.closure_timestamp = timestamp
-        b.save()
-        self.group.price_update(new_price=b.value, market=b.market)
-        b.trader.update_status(b)
-        if b.trader.is_mm:
-            b.trader.post_new_bids(market=b.market)
-        self.update_status(b)
-        bids = self.group.get_active_bids()
-        msg_to_everyone = dict(action='setBids', bids=bids, market=b.market, price=b.value,
-                               )
-        msg_to_trader = dict(action='setBids', bids=bids, market=b.market, price=b.value,
-                             status=b.trader.current_status(),
-                             )
-        msg_to_contractor = dict(action='setBids', bids=bids, market=b.market, price=b.value,
-                                 status=self.current_status(), )
+        with transaction.atomic():
+            b = Bid.objects.select_for_update().get(id=bid_id)
+            b.contractor = self
+            b.active = False
+            b.closure_timestamp = timestamp
+            b.save()
+            self.group.price_update(new_price=b.value, market=b.market)
+            b.trader.update_status(b)
+            if b.trader.is_mm:
+                b.trader.post_new_bids(market=b.market)
+            self.update_status(b)
+            bids = self.group.get_active_bids()
+            msg_to_everyone = dict(action='setBids', bids=bids, market=b.market, price=b.value,
+                                   )
+            msg_to_trader = dict(action='setBids', bids=bids, market=b.market, price=b.value,
+                                 status=b.trader.current_status(),
+                                 )
+            msg_to_contractor = dict(action='setBids', bids=bids, market=b.market, price=b.value,
+                                     status=self.current_status(), )
 
-        all_others = [i.id_in_group for i in self.get_others_in_group() if i != b.trader]
-        res = {i: msg_to_everyone for i in all_others}
+            all_others = [i.id_in_group for i in self.get_others_in_group() if i != b.trader]
+            res = {i: msg_to_everyone for i in all_others}
 
-        return {**res, self.id_in_group: msg_to_contractor, b.trader.id_in_group: msg_to_trader}
+            return {**res, self.id_in_group: msg_to_contractor, b.trader.id_in_group: msg_to_trader}
 
     def update_status(self, bid):
         # TODO: clean this BS
