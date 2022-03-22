@@ -514,6 +514,7 @@ class Player(BasePlayer):
             b.closure_timestamp = timestamp
             b.save()
             self.group.price_update(new_price=b.value, market=b.market)
+            self.group.save()
             b.trader.update_status(b)
             if b.trader.is_mm:
                 b.trader.post_new_bids(market=b.market)
@@ -548,6 +549,7 @@ class Player(BasePlayer):
             setattr(self, f'cash_{bid.market}', cash - bid.value)
             shares = getattr(self, f'shares_{bid.market}')
             setattr(self, f'shares_{bid.market}', shares + 1)
+        self.save()
 
     def optional_data_setter(self, market_data, market, param):
         """Optionally update current status if it has changed. Not sure it's worth it but it saves a few database queries"""
