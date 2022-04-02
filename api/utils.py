@@ -151,7 +151,7 @@ def nt_quote_wrapper(round_number, fundamental_value, aux_S, num_rounds, market)
 
 
 def mm_wrapper(round_number, num_rounds, aux_S, sigma_mm, risk_aversion, q_mm):
-    res = market_maker_posting_quotes(A=10, risk_aversion_MM=risk_aversion, kappa_mm=1, Q=30, q_mm=q_mm,
+    res = market_maker_posting_quotes(A=50, risk_aversion_MM=risk_aversion, kappa_mm=1, Q=20, q_mm=q_mm,
                                       sigma_mm=sigma_mm,
                                       aux_S=aux_S, tt=round_number, T=num_rounds)
     logger.info(

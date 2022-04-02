@@ -9,14 +9,14 @@ SESSION_CONFIGS = [
     dict(
         name='market_disjoint',
         display_name="market disjoint",
-        num_demo_participants=3,
+        num_demo_participants=1,
         app_sequence=app_sequence,
         merged=False
     ),
     dict(
         name='market_merged',
         display_name="market merged",
-        num_demo_participants=3,
+        num_demo_participants=1,
         app_sequence=app_sequence,
         merged=True
     ),
@@ -31,19 +31,18 @@ SESSION_CONFIG_DEFAULTS = dict(
     real_world_currency_per_point=1.00, participation_fee=0.00, doc="",
     initial_shares_A=2,
     initial_shares_B=2,
-    initial_money_A=250,
-    initial_money_B=250,
+    initial_money_A=25,
+    initial_money_B=25,
     group_size=3,
     day_length=250,
-    dividends_A='0, 10, 16, 22',
-    dividends_B='-20,-10,0,10, 20',
-    terminal_A=50.0,
-    terminal_B=70.0,
+    dividends_A='0, 0.10, 0.16, 0.22',
+    dividends_B='-0.20,-0.10,0,0.10, 0.20',
+    terminal_A=1.80,
+    terminal_B=2.80,
     num_virtual_players=6,
     num_mms=2,
     max_calls=6,
     results_wait_time=60
-
 )
 
 # ISO-639 code

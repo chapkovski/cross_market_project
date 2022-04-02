@@ -74,7 +74,7 @@ class EventType:
 class Constants(BaseConstants):
     name_in_url = 'main'
     players_per_group = None
-    num_rounds = 10
+    num_rounds = 15
     tick_frequency = 5
     markets = ['A', 'B']
     risk_lb = 0.5
