@@ -32,6 +32,7 @@ class ResultsWaitPage(WaitPage):
 
 
 class Results(Page):
+    pass
     def get_timeout_seconds(self):
         return self.session.config.get('results_wait_time', 20)
 

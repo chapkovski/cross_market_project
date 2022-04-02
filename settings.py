@@ -42,7 +42,7 @@ SESSION_CONFIG_DEFAULTS = dict(
     num_virtual_players=6,
     num_mms=2,
     max_calls=6,
-    results_wait_time=20
+    results_wait_time=60
 
 )
 

@@ -410,7 +410,7 @@ class Player(BasePlayer):
         return (self.cash_A or 0) + (self.cash_B or 0)
 
     def total_stock_value(self):
-        return (self.stock_value_A or 0) + (self.stock_value_B or 0)
+        return round((self.stock_value_A or 0) + (self.stock_value_B or 0),2)
 
     def total_in_market(self, market):
         cash = getattr(self, f'cash_{market}') or 0

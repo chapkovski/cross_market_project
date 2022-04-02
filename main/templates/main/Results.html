@@ -52,28 +52,28 @@
         <tr>
     <th>    </th>
             <th class="rotate">
+                <div><span>Closing price A</span></div>
+            </th>
+            <th class="rotate">
+                <div><span>Closing price  B</span></div>
+            </th>
+            <th class="rotate">
                 <div><span>Shares A</span></div>
-            </th>
-            <th class="rotate">
-                <div><span>Terminal value A</span></div>
-            </th>
-            <th class="rotate">
-                <div><span>Payoff from A market</span></div>
             </th>
             <th class="rotate">
                 <div><span>Shares B</span></div>
             </th>
             <th class="rotate">
-                <div><span>Terminal value B</span></div>
+                <div><span>dividend A realization</span></div>
             </th>
             <th class="rotate">
-                <div><span>Payoff from B market</span></div>
+                <div><span>dividend B realization</span></div>
             </th>
             <th class="rotate">
                 <div><span>Cash</span></div>
             </th>
             <th class="rotate">
-                <div><span>Total payoff</span></div>
+                <div><span>Total stock value</span></div>
             </th>
         </tr>
         </thead>
@@ -81,14 +81,14 @@
         {% for p in player.in_all_rounds %}
             <tr>
                 <td>Period {{ p.round_number }}</td>
+                <td>{{ p.group.price_A }}</td>
+                <td>{{ p.group.price_B }}</td>
                 <td>{{ p.shares_A }}</td>
-                <td>{{ p.subsession.terminal_A }}</td>
-                <td>{{ p.stocks_A_payoff }}</td>
                 <td>{{ p.shares_B }}</td>
-                <td>{{ p.subsession.terminal_B }}</td>
-                <td>{{ p.stocks_B_payoff }}</td>
+                <td>{{ p.dividend_A_payoff }}</td>
+                <td>{{ p.dividend_B_payoff }}</td>
                 <td>{{ p.cash_payoff }}</td>
-                <td>{{ p.intermediary_payoff }}</td>
+                <td>{{ p.total_stock_value }}</td>
             </tr>
         {% endfor %}
 
