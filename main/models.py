@@ -301,7 +301,7 @@ class Group(BaseGroup):
 
         if self.round_number == 1:
             for p in self.get_players():
-                if p.is_virtual:
+                if p.virtual:
                     p.cash_A = initial_money_A_virtual
                     p.cash_B = initial_money_B_virtual
                 else:

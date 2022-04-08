@@ -49,11 +49,12 @@ SESSION_CONFIG_DEFAULTS = dict(
 
 # ISO-639 code
 # for example: de, fr, ja, ko, zh-hans
-LANGUAGE_CODE = 'en'
+LANGUAGE_CODE = 'it'
 
 # e.g. EUR, GBP, CNY, JPY
 REAL_WORLD_CURRENCY_CODE = 'USD'
 USE_POINTS = True
+POINTS_CUSTOM_NAME = 'ECU'
 
 ADMIN_USERNAME = 'admin'
 # for security, best to set admin password in an environment variable
