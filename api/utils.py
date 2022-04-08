@@ -2,7 +2,7 @@ import numpy as np
 from scipy.linalg import expm
 from math import log
 import logging
-
+from .params import  MM_PARAMS
 logger = logging.getLogger(__name__)
 
 NT_MARKET_PARAMS = dict(A=dict(T=0.25,
@@ -131,7 +131,7 @@ def noise_trading_posting_quotes(tt, fundamental_value, phi, kappa, alfa, aux_p1
         end
         
     """
-    rng = np.random.default_rng()
+    rng = np.random.default_rng(tt)
 
     direction = rng.binomial(1, max(0.5 - phi * tt, 0))
     u1 = kappa * fundamental_value * rng.random()
@@ -151,7 +151,11 @@ def nt_quote_wrapper(round_number, fundamental_value, aux_S, num_rounds, market)
 
 
 def mm_wrapper(round_number, num_rounds, aux_S, sigma_mm, risk_aversion, q_mm):
-    res = market_maker_posting_quotes(A=50, risk_aversion_MM=risk_aversion, kappa_mm=1, Q=20, q_mm=q_mm,
+    res = market_maker_posting_quotes(A=MM_PARAMS.A,
+                                      risk_aversion_MM=risk_aversion,
+                                      kappa_mm=MM_PARAMS.kappa_mm,
+                                      Q=MM_PARAMS.Q,
+                                      q_mm=q_mm,
                                       sigma_mm=sigma_mm,
                                       aux_S=aux_S, tt=round_number, T=num_rounds)
     logger.info(
@@ -160,6 +164,7 @@ def mm_wrapper(round_number, num_rounds, aux_S, sigma_mm, risk_aversion, q_mm):
 
 
 if __name__ == '__main__':
+
     res = market_maker_posting_quotes(A=10, risk_aversion_MM=.5, kappa_mm=1, Q=30, q_mm=2, sigma_mm=.5,
                                       aux_S=100, tt=1, T=15)
 

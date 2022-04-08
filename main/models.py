@@ -10,6 +10,8 @@ from otree.api import (
 )
 import logging
 from django.db import transaction
+from api.params import MM_PARAMS
+
 logger = logging.getLogger(__name__)
 import numpy as np
 import json
@@ -51,10 +53,12 @@ def create_scheduled_calls(group, virtuals, day_length):
     MAX_CALLS = group.session.config.get('max_calls', 5)
     for v in virtuals:
         if not v.is_mm:
+            random.seed(group.round_number)
             num_calls = random.randint(1, MAX_CALLS)
             calls = random.choices(timeslots, k=num_calls)
             for c in calls:
                 eta = datetime.now() + timedelta(seconds=c)
+                random.seed(group.round_number)
                 market = random.choice(Constants.markets)
                 h = handle_update.schedule((group.id, v.id, market), eta=eta)
                 h()
@@ -284,18 +288,25 @@ class Group(BaseGroup):
             self.price_B = prev.price_B
         self.starting_time = timezone.now()
         self.finish_time = timezone.now() + timedelta(seconds=day_length)
+        random.seed(self.round_number)
         self.dividend_A = random.choice(self.session.vars.get('dividends_A'))
         self.dividend_B = random.choice(self.session.vars.get('dividends_B'))
         # set player params
         initial_shares_A = c.get('initial_shares_A', 0)
         initial_shares_B = c.get('initial_shares_B', 0)
-        initial_money_A = c.get('initial_money_A', 0)
-        initial_money_B = c.get('initial_money_B', 0)
+        initial_money_A_virtual = c.get('initial_money_A_virtual', 0)
+        initial_money_B_virtual = c.get('initial_money_B_virtual', 0)
+        initial_money_A_human = c.get('initial_money_A_human', 0)
+        initial_money_B_human = c.get('initial_money_B_human', 0)
 
         if self.round_number == 1:
             for p in self.get_players():
-                p.cash_A = initial_money_A
-                p.cash_B = initial_money_B
+                if p.is_virtual:
+                    p.cash_A = initial_money_A_virtual
+                    p.cash_B = initial_money_B_virtual
+                else:
+                    p.cash_A = initial_money_A_human
+                    p.cash_B = initial_money_B_human
                 if p.is_mm:
                     p.shares_A = 0
                     p.shares_B = 0
@@ -343,7 +354,7 @@ class Group(BaseGroup):
             return dict(A=a_prices, B=b_prices)
 
     def price_update(self, new_price, market):
-        setattr(self, f'price_{market}', new_price)
+        setattr(self, f'price_{market}', round(new_price, 2))
 
     def get_active_bids(self):
         bids = self.bids.filter(active=True).values('trader', 'value', 'type', 'market', 'id', 'trader__virtual',
@@ -355,16 +366,16 @@ class Player(BasePlayer):
     virtual = models.BooleanField(initial=False)
     is_mm = models.BooleanField(initial=False)
     risk_aversion = models.FloatField()  # this is set for MMs only
-    intermediary_payoff = models.CurrencyField()
+    intermediary_payoff = models.FloatField()
     cash_A = models.FloatField()
     cash_B = models.FloatField()
     shares_A = models.FloatField()
     shares_B = models.FloatField()
-    dividend_A_payoff = models.CurrencyField()
-    dividend_B_payoff = models.CurrencyField()
-    stocks_A_payoff = models.CurrencyField()
-    stocks_B_payoff = models.CurrencyField()
-    cash_payoff = models.CurrencyField()
+    dividend_A_payoff = models.FloatField()
+    dividend_B_payoff = models.FloatField()
+    stocks_A_payoff = models.FloatField()
+    stocks_B_payoff = models.FloatField()
+    cash_payoff = models.FloatField()
 
     @property
     def stock_value_A(self):
@@ -375,15 +386,15 @@ class Player(BasePlayer):
         return self.shares_B * self.group.price_B
 
     def set_payoff(self):
-        self.dividend_A_payoff = self.shares_A * self.group.dividend_A
-        self.dividend_B_payoff = self.shares_B * self.group.dividend_B
+        self.dividend_A_payoff = round(self.shares_A * self.group.dividend_A, 2)
+        self.dividend_B_payoff = round(self.shares_B * self.group.dividend_B, 2)
         self.stocks_A_payoff = self.dividend_A_payoff + self.subsession.terminal_A * self.shares_A
         self.stocks_B_payoff = self.dividend_B_payoff + self.subsession.terminal_B * self.shares_B
-        self.cash_A+=self.dividend_A_payoff
-        self.cash_B+=self.dividend_B_payoff
+        self.cash_A += self.dividend_A_payoff
+        self.cash_B += self.dividend_B_payoff
 
-        self.cash_payoff = self.total_cash()
-        self.intermediary_payoff = self.total_cash() + self.stocks_A_payoff + self.stocks_B_payoff
+        self.cash_payoff = round(self.total_cash(), 2)
+        self.intermediary_payoff = round(self.total_cash() + self.stocks_A_payoff + self.stocks_B_payoff, 2)
 
     def current_status(self):
         return dict(
@@ -410,7 +421,7 @@ class Player(BasePlayer):
         return (self.cash_A or 0) + (self.cash_B or 0)
 
     def total_stock_value(self):
-        return round((self.stock_value_A or 0) + (self.stock_value_B or 0),2)
+        return round((self.stock_value_A or 0) + (self.stock_value_B or 0), 2)
 
     def total_in_market(self, market):
         cash = getattr(self, f'cash_{market}') or 0
@@ -480,6 +491,9 @@ class Player(BasePlayer):
         aux_S = self.group.dynamic_aux_s(market)
         sigma_mm = getattr(self.group, f'sigma_{market}')
         q_mm = getattr(self, f'shares_{market}')
+        if q_mm >= MM_PARAMS.Q:
+            setattr(self, f'shares_{market}', 0)
+            q_mm = getattr(self, f'shares_{market}')
         resp = mm_wrapper(self.round_number, Constants.num_rounds, aux_S, sigma_mm, self.risk_aversion, q_mm=q_mm)
 
         to_add = [
