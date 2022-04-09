@@ -14,7 +14,7 @@ def handle_update(group_id, virtual_id, market):
     # Check for attainability: inventory condition (cash and shares) and one-side condition (they can post to only
     group = Group.objects.get(id=group_id)
     aux_s = getattr(group, f'aux_s_{market}')
-    seed_base = Player.session.config.get('seed_base', 0)
+    seed_base = virtual.session.config.get('seed_base', 0)
     quote = nt_quote_wrapper(virtual.round_number, virtual.subsession.fv(market), aux_s, Constants.num_rounds, market,
                              seed_base)
     bid_type = bid_types[quote.get('direction')]
