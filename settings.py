@@ -35,6 +35,7 @@ SESSION_CONFIG_DEFAULTS = dict(
     initial_money_B_virtual=25,
     initial_money_A_human=25,
     initial_money_B_human=25,
+    seed_base=0,
     group_size=1,
     day_length=250,
     dividends_A='0, 0.10, 0.16, 0.22',

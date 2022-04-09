@@ -51,14 +51,16 @@ def create_scheduled_calls(group, virtuals, day_length):
     # TODO: split the scheduling for two markets, pass market name as an input when scheduling.
     timeslots = list(range(1, day_length))
     MAX_CALLS = group.session.config.get('max_calls', 5)
+    seed_base = group.session.config.get('seed_base', 0)
+    seed_num = seed_base+group.round_number
     for v in virtuals:
         if not v.is_mm:
-            random.seed(group.round_number)
+            random.seed(seed_num)
             num_calls = random.randint(1, MAX_CALLS)
             calls = random.choices(timeslots, k=num_calls)
             for c in calls:
                 eta = datetime.now() + timedelta(seconds=c)
-                random.seed(group.round_number)
+                random.seed(seed_num)
                 market = random.choice(Constants.markets)
                 h = handle_update.schedule((group.id, v.id, market), eta=eta)
                 h()
@@ -288,7 +290,9 @@ class Group(BaseGroup):
             self.price_B = prev.price_B
         self.starting_time = timezone.now()
         self.finish_time = timezone.now() + timedelta(seconds=day_length)
-        random.seed(self.round_number)
+        seed_base = self.session.config.get('seed_base', 0)
+        seed_num = seed_base + self.round_number
+        random.seed(seed_num)
         self.dividend_A = random.choice(self.session.vars.get('dividends_A'))
         self.dividend_B = random.choice(self.session.vars.get('dividends_B'))
         # set player params
