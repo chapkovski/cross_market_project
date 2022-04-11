@@ -59,9 +59,10 @@ def create_scheduled_calls(group, virtuals, day_length):
                 eta = datetime.now() + timedelta(seconds=c)
                 market = random.choice(Constants.markets)
                 ind_seed_num = seed_base * (10 ** 6) + v.round_number * (10 ** 5) + v.id_in_group * (10 ** 3) + i*10
-                
+
                 h = handle_update.schedule((group.id, v.id, market, ind_seed_num), eta=eta)
                 h()
+    random.seed()
 
 
 class BidType:
