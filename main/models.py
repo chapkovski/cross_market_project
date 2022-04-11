@@ -46,13 +46,10 @@ Your app description
 
 def create_scheduled_calls(group, virtuals, day_length):
     from .tasks import handle_update
-    # TODO: that's the point where we call matlab and get back the list of ids of players and the timeslots.
-    # TODO: right now it's just a naive realiazion of the same process
-    # TODO: split the scheduling for two markets, pass market name as an input when scheduling.
     timeslots = list(range(1, day_length))
     MAX_CALLS = group.session.config.get('max_calls', 5)
     seed_base = group.session.config.get('seed_base', 0)
-    seed_num = seed_base + group.round_number
+    seed_num = seed_base * (10 ** 4) + group.round_number
     random.seed(seed_num)
     for v in virtuals:
         if not v.is_mm:
@@ -61,7 +58,8 @@ def create_scheduled_calls(group, virtuals, day_length):
             for i, c in enumerate(calls):
                 eta = datetime.now() + timedelta(seconds=c)
                 market = random.choice(Constants.markets)
-                ind_seed_num = v.id_in_group + seed_base + i
+                ind_seed_num = seed_base * (10 ** 6) + v.round_number * (10 ** 5) + v.id_in_group * (10 ** 3) + i*10
+                
                 h = handle_update.schedule((group.id, v.id, market, ind_seed_num), eta=eta)
                 h()
 
