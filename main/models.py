@@ -52,17 +52,17 @@ def create_scheduled_calls(group, virtuals, day_length):
     timeslots = list(range(1, day_length))
     MAX_CALLS = group.session.config.get('max_calls', 5)
     seed_base = group.session.config.get('seed_base', 0)
-    seed_num = seed_base+group.round_number
+    seed_num = seed_base + group.round_number
+    random.seed(seed_num)
     for v in virtuals:
         if not v.is_mm:
-            random.seed(seed_num)
             num_calls = random.randint(1, MAX_CALLS)
             calls = random.choices(timeslots, k=num_calls)
-            for c in calls:
+            for i, c in enumerate(calls):
                 eta = datetime.now() + timedelta(seconds=c)
-                random.seed(seed_num)
                 market = random.choice(Constants.markets)
-                h = handle_update.schedule((group.id, v.id, market), eta=eta)
+                ind_seed_num = v.id_in_group + seed_base + i
+                h = handle_update.schedule((group.id, v.id, market, ind_seed_num), eta=eta)
                 h()
 
 

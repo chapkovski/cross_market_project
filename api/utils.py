@@ -108,7 +108,7 @@ def market_maker_posting_quotes(A, risk_aversion_MM, kappa_mm, Q, q_mm, sigma_mm
     return dict(s_bid=round(s_bid, 2), s_ask=round(s_ask, 2))
 
 
-def noise_trading_posting_quotes(tt, fundamental_value, phi, kappa, alfa, aux_p1, seed_base):
+def noise_trading_posting_quotes(tt, fundamental_value, phi, kappa, alfa, aux_p1, seed_num):
     """
 
     :return:
@@ -131,7 +131,7 @@ def noise_trading_posting_quotes(tt, fundamental_value, phi, kappa, alfa, aux_p1
         end
         
     """
-    rng = np.random.default_rng(tt+seed_base)
+    rng = np.random.default_rng(tt+seed_num)
 
     direction = rng.binomial(1, max(0.5 - phi * tt, 0))
     u1 = kappa * fundamental_value * rng.random()
@@ -140,14 +140,14 @@ def noise_trading_posting_quotes(tt, fundamental_value, phi, kappa, alfa, aux_p1
     return dict(direction=direction, quote=quote)
 
 
-def nt_quote_wrapper(round_number, fundamental_value, aux_S, num_rounds, market, seed_base):
+def nt_quote_wrapper(round_number, fundamental_value, aux_S, num_rounds, market, seed_num):
     params = NT_MARKET_PARAMS[market].copy()
     params['phi'] = params.get('T', 0)/num_rounds
     params.pop('T', None)
     return noise_trading_posting_quotes(tt=round_number,
                                         fundamental_value=fundamental_value,
                                         aux_p1=aux_S,
-                                        seed_base=seed_base,
+                                        seed_num=seed_num,
                                         **params)
 
 
