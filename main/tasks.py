@@ -9,12 +9,12 @@ bid_types = ['sell', 'buy']
 
 
 @db_task()
-def handle_update(group_id, virtual_id, market, quote):
+def handle_update(group_id, virtual_id, market, quote, eta):
     virtual = Player.objects.get(id=virtual_id)
     # Check for attainability: inventory condition (cash and shares) and one-side condition (they can post to only
     group = Group.objects.get(id=group_id)
     bid_type = bid_types[quote.get('direction')]
-    timestamp = timezone.now()
+    timestamp = eta
     data = dict(type=bid_type, market=market, value=round(quote.get('quote'), 2))
     resp = virtual.addBid(data, timestamp)
     price = getattr(group, f'price_{market}')

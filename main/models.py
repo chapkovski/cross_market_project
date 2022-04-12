@@ -26,6 +26,7 @@ from api.utils import mm_wrapper, nt_quote_wrapper
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 import numpy as np
+
 """
      await channel_utils.group_send_wrapper(
                 type='room_session_ready',
@@ -57,7 +58,7 @@ def create_scheduled_calls(group, virtuals, day_length):
             num_calls = random.randint(1, MAX_CALLS)
             calls = random.choices(timeslots, k=num_calls)
             for i, c in enumerate(calls):
-                eta = datetime.now() + timedelta(seconds=c)
+                eta = datetime.now() + timedelta(seconds=c, microseconds=random.randrange(0, 1000000))
                 market = random.choice(Constants.markets)
                 aux_s = getattr(group, f'aux_s_{market}')
                 quote = nt_quote_wrapper(group.round_number,
@@ -67,7 +68,7 @@ def create_scheduled_calls(group, virtuals, day_length):
                                          market,
                                          rng=rng)
 
-                h = handle_update.schedule((group.id, v.id, market, quote), eta=eta)
+                h = handle_update.schedule((group.id, v.id, market, quote, eta), eta=eta)
                 h()
     random.seed()
 
@@ -488,6 +489,7 @@ class Player(BasePlayer):
             injector = data.copy()
             injector.pop('action', None)
             injector.pop('trader_id', None)
+
             b = Bid(trader=self, group=self.group, timestamp=timestamp, active=True,
                     **injector)
             b.save()
