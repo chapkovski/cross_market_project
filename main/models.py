@@ -22,10 +22,10 @@ from django.db.models import Max, StdDev, Avg
 from datetime import datetime, timedelta
 from otree.models import Participant
 from uuid import UUID, uuid4
-from api.utils import mm_wrapper
+from api.utils import mm_wrapper, nt_quote_wrapper
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-
+import numpy as np
 """
      await channel_utils.group_send_wrapper(
                 type='room_session_ready',
@@ -51,6 +51,7 @@ def create_scheduled_calls(group, virtuals, day_length):
     seed_base = group.session.config.get('seed_base', 0)
     seed_num = seed_base * (10 ** 4) + group.round_number
     random.seed(seed_num)
+    rng = np.random.default_rng(seed_num)
     for v in virtuals:
         if not v.is_mm:
             num_calls = random.randint(1, MAX_CALLS)
@@ -58,9 +59,15 @@ def create_scheduled_calls(group, virtuals, day_length):
             for i, c in enumerate(calls):
                 eta = datetime.now() + timedelta(seconds=c)
                 market = random.choice(Constants.markets)
-                ind_seed_num = seed_base * (10 ** 6) + v.round_number * (10 ** 5) + v.id_in_group * (10 ** 3) + i*10
+                aux_s = getattr(group, f'aux_s_{market}')
+                quote = nt_quote_wrapper(group.round_number,
+                                         group.subsession.fv(market),
+                                         aux_s,
+                                         Constants.num_rounds,
+                                         market,
+                                         rng=rng)
 
-                h = handle_update.schedule((group.id, v.id, market, ind_seed_num), eta=eta)
+                h = handle_update.schedule((group.id, v.id, market, quote), eta=eta)
                 h()
     random.seed()
 
