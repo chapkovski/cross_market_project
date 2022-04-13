@@ -37,14 +37,14 @@ SESSION_CONFIG_DEFAULTS = dict(
     initial_money_B_human=25,
     seed_base=0,
     group_size=1,
-    day_length=30,
+    day_length=60,
     dividends_A='0, 0.10, 0.16, 0.22',
     dividends_B='-0.20,-0.10,0,0.10, 0.20',
     terminal_A=1.80,
     terminal_B=2.80,
     num_virtual_players=10,
     num_mms=2,
-    max_calls=10,
+    max_calls=5,
     results_wait_time=60
 )
 

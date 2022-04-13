@@ -11,6 +11,7 @@ from otree.api import (
 import logging
 from django.db import transaction
 from api.params import MM_PARAMS
+import pytz
 
 logger = logging.getLogger(__name__)
 import numpy as np
@@ -47,18 +48,24 @@ Your app description
 
 def create_scheduled_calls(group, virtuals, day_length):
     from .tasks import handle_update
-    timeslots = list(range(1, day_length))
     MAX_CALLS = group.session.config.get('max_calls', 5)
     seed_base = group.session.config.get('seed_base', 0)
     seed_num = seed_base * (10 ** 4) + group.round_number
     random.seed(seed_num)
     rng = np.random.default_rng(seed_num)
-    for v in virtuals:
+    enddate = timezone.now() + timedelta(seconds=day_length)
+    timeslots = np.arange(timezone.now(), enddate, timedelta(milliseconds=Constants.granularity)).astype(
+        datetime).tolist()
+    random.shuffle(timeslots)
+    counter = 0
+    for i, v in enumerate(virtuals):
         if not v.is_mm:
             num_calls = random.randint(1, MAX_CALLS)
-            calls = random.choices(timeslots, k=num_calls)
-            for i, c in enumerate(calls):
-                eta = datetime.now() + timedelta(seconds=c, microseconds=random.randrange(0, 1000000))
+            counter+=1
+            for c in range(num_calls):
+                counter+=1
+                eta = timeslots[counter]
+                eta = eta.replace(tzinfo=pytz.UTC)
                 market = random.choice(Constants.markets)
                 aux_s = getattr(group, f'aux_s_{market}')
                 quote = nt_quote_wrapper(group.round_number,
@@ -92,6 +99,7 @@ class Constants(BaseConstants):
     markets = ['A', 'B']
     risk_lb = 0.5
     risk_ub = 1.0
+    granularity = 1000
 
 
 conv = lambda x: [float(i.strip()) for i in x.split(',')]
@@ -132,6 +140,14 @@ class Subsession(BaseSubsession):
 
     def creating_session(self):
         c = self.session.config
+        day_length = c.get('day_length', 300)
+        num_virtual_players = c.get('num_virtual_players', 5)
+        MAX_CALLS = c.get('max_calls', 5)
+        enddate = timezone.now() + timedelta(seconds=day_length)
+        timeslots = np.arange(timezone.now(), enddate, timedelta(milliseconds=Constants.granularity)).astype(
+            datetime).tolist()
+        assert len(
+            timeslots) > MAX_CALLS * num_virtual_players, 'Too many calls or too many virtual players for time granularity. Increase day length or decrease num_virtuals or their calls'
         dividends_A = conv(c.get('dividends_A'))
         dividends_B = conv(c.get('dividends_B'))
         self.terminal_A = c.get('terminal_A')
@@ -534,7 +550,8 @@ class Player(BasePlayer):
     def takeBid(self, data, timestamp):
         bid_id = data.get('bid_id')
         with transaction.atomic():
-            b = Bid.objects.select_for_update().get(id=bid_id)
+            b = Bid.objects.get(id=bid_id)
+            # b = Bid.objects.select_for_update().get(id=bid_id)
             b.contractor = self
             b.active = False
             b.closure_timestamp = timestamp
