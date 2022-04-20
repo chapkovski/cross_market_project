@@ -44,7 +44,7 @@ SESSION_CONFIG_DEFAULTS = dict(
     terminal_B=2.80,
     num_virtual_players=10,
     num_mms=2,
-    max_calls=5,
+    max_calls=10,
     results_wait_time=60
 )
 

@@ -99,7 +99,7 @@ class Constants(BaseConstants):
     markets = ['A', 'B']
     risk_lb = 0.5
     risk_ub = 1.0
-    granularity = 1000
+    granularity = 300
 
 
 conv = lambda x: [float(i.strip()) for i in x.split(',')]
@@ -550,8 +550,8 @@ class Player(BasePlayer):
     def takeBid(self, data, timestamp):
         bid_id = data.get('bid_id')
         with transaction.atomic():
-            # b = Bid.objects.get(id=bid_id)
-            b = Bid.objects.select_for_update().get(id=bid_id)
+            b = Bid.objects.get(id=bid_id)
+            # b = Bid.objects.select_for_update().get(id=bid_id)
             b.contractor = self
             b.active = False
             b.closure_timestamp = timestamp
