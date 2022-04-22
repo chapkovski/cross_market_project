@@ -415,14 +415,14 @@ class Player(BasePlayer):
     def set_payoff(self):
         self.dividend_A_payoff = round(self.shares_A * self.group.dividend_A, 2)
         self.dividend_B_payoff = round(self.shares_B * self.group.dividend_B, 2)
-        self.stocks_A_payoff = self.dividend_A_payoff + self.subsession.terminal_A * self.shares_A
-        self.stocks_B_payoff = self.dividend_B_payoff + self.subsession.terminal_B * self.shares_B
+        self.stocks_A_payoff =  self.subsession.terminal_A * self.shares_A
+        self.stocks_B_payoff =  self.subsession.terminal_B * self.shares_B
         self.cash_A += self.dividend_A_payoff
         self.cash_B += self.dividend_B_payoff
 
         self.cash_payoff = round(self.total_cash(), 2)
         self.intermediary_payoff = round(self.total_cash() + self.stocks_A_payoff + self.stocks_B_payoff, 2)
-
+        self.payoff = self.intermediary_payoff # why? because originally we thought about random round. let's keep it like that
     def current_status(self):
         return dict(
             A=dict(shares=self.shares_A,

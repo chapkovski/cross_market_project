@@ -33,6 +33,14 @@ class ResultsWaitPage(WaitPage):
 
 class Results(Page):
     pass
+
+    def get_timeout_seconds(self):
+        return self.session.config.get('results_wait_time', 20)
+
+
+class FinalResults(Page):
+    def is_displayed(self):
+        return self.round_number == Constants.num_rounds
     # def get_timeout_seconds(self):
     #     return self.session.config.get('results_wait_time', 20)
 
@@ -40,8 +48,9 @@ class Results(Page):
 page_sequence = [
     FirstWP,
     SetParamsWP,
-    # Intro,
+    Intro,
     Trade,
     ResultsWaitPage,
-    Results
+    Results,
+    FinalResults
 ]

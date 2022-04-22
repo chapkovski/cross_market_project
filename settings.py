@@ -31,21 +31,21 @@ SESSION_CONFIG_DEFAULTS = dict(
     real_world_currency_per_point=1.00, participation_fee=0.00, doc="",
     initial_shares_A=2,
     initial_shares_B=2,
-    initial_money_A_virtual=25,
-    initial_money_B_virtual=25,
-    initial_money_A_human=25,
-    initial_money_B_human=25,
+    initial_money_A_virtual=5.85,
+    initial_money_B_virtual=5.85,
+    initial_money_A_human=5.85,
+    initial_money_B_human=5.85,
     seed_base=10,
     group_size=1,
-    day_length=60,
+    day_length=180,
     dividends_A='0, 0.10, 0.16, 0.22',
     dividends_B='-0.20,-0.10,0,0.10, 0.20',
     terminal_A=1.80,
     terminal_B=2.80,
-    num_virtual_players=10,
-    num_mms=2,
-    max_calls=10,
-    results_wait_time=60
+    num_virtual_players=30,
+    num_mms=10,
+    max_calls=6,
+    results_wait_time=30
 )
 
 # ISO-639 code
@@ -56,7 +56,8 @@ LANGUAGE_CODE = 'it'
 REAL_WORLD_CURRENCY_CODE = 'USD'
 USE_POINTS = True
 POINTS_CUSTOM_NAME = 'ECU'
-
+POINTS_DECIMAL_PLACES = 2
+REAL_WORLD_CURRENCY_DECIMAL_PLACES = 2
 ADMIN_USERNAME = 'admin'
 # for security, best to set admin password in an environment variable
 ADMIN_PASSWORD = environ.get('OTREE_ADMIN_PASSWORD')
