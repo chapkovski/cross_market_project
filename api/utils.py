@@ -166,7 +166,7 @@ def mm_wrapper(round_number, num_rounds, aux_S, sigma_mm, risk_aversion, q_mm):
 
 if __name__ == '__main__':
 
-    res = market_maker_posting_quotes(A=10, risk_aversion_MM=.5, kappa_mm=1, Q=30, q_mm=2, sigma_mm=.5,
+    res = market_maker_posting_quotes(A=50, risk_aversion_MM=.5, kappa_mm=1, Q=20, q_mm=2, sigma_mm=.5,
                                       aux_S=100, tt=1, T=15)
 
     print(res)
