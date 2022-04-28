@@ -20,6 +20,14 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=True
     ),
+    dict(
+        name='market_disjoint_20',
+        display_name="market disjoint 2",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
+        seed_base=20
+    )
 ]
 
 # if you set a property in SESSION_CONFIG_DEFAULTS, it will be inherited by all configs
