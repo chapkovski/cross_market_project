@@ -175,8 +175,8 @@ SESSION_CONFIGS = [
 
 SESSION_CONFIG_DEFAULTS = dict(
     real_world_currency_per_point=1.00, participation_fee=0.00, doc="",
-    initial_shares_A=1,
-    initial_shares_B=1,
+    initial_shares_A=2,
+    initial_shares_B=2,
     initial_money_A_virtual=10,
     initial_money_B_virtual=10,
     initial_money_A_human=10,
