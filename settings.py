@@ -11,14 +11,8 @@ SESSION_CONFIGS = [
         display_name="market disjoint",
         num_demo_participants=1,
         app_sequence=app_sequence,
-        merged=False
-    ),
-    dict(
-        name='market_merged',
-        display_name="market merged",
-        num_demo_participants=1,
-        app_sequence=app_sequence,
-        merged=True
+        merged=False,
+        seed_base=10
     ),
     dict(
         name='market_disjoint_20',
@@ -27,6 +21,150 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=False,
         seed_base=20
+    ),
+    dict(
+        name='market_disjoint_30',
+        display_name="market disjoint 3",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
+        seed_base=30
+    ),
+    dict(
+        name='market_disjoint_40',
+        display_name="market disjoint 4",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
+        seed_base=40
+    ),
+    dict(
+        name='market_disjoint_50',
+        display_name="market disjoint 5",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
+        seed_base=50
+    ),
+    dict(
+        name='market_disjoint_60',
+        display_name="market disjoint 6",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
+        seed_base=60
+    ),
+    dict(
+        name='market_disjoint_70',
+        display_name="market disjoint 7",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
+        seed_base=70
+    ),
+    dict(
+        name='market_disjoint_80',
+        display_name="market disjoint 8",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
+        seed_base=80
+    ),
+    dict(
+        name='market_disjoint_90',
+        display_name="market disjoint 9",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
+        seed_base=90
+    ),
+    dict(
+        name='market_disjoint_100',
+        display_name="market disjoint 10",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
+        seed_base=100
+    ),
+    dict(
+        name='market_merged',
+        display_name="market merged",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        seed_base=10
+    ),
+    dict(
+        name='market_merged_20',
+        display_name="market merged 2",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        seed_base=20
+    ),
+    dict(
+        name='market_merged_30',
+        display_name="market merged 3",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        seed_base=30
+    ),
+    dict(
+        name='market_merged_40',
+        display_name="market merged 4",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        seed_base=40
+    ),
+    dict(
+        name='market_merged_50',
+        display_name="market merged 5",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        seed_base=50
+    ),
+    dict(
+        name='market_merged_60',
+        display_name="market merged 6",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        seed_base=60
+    ),
+    dict(
+        name='market_merged_70',
+        display_name="market merged 7",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        seed_base=70
+    ),
+    dict(
+        name='market_merged_80',
+        display_name="market merged 8",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        seed_base=80
+    ),
+    dict(
+        name='market_merged_90',
+        display_name="market merged 9",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        seed_base=90
+    ),
+    dict(
+        name='market_merged_100',
+        display_name="market merged 10",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        seed_base=100
     )
 ]
 
