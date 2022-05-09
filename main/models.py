@@ -476,6 +476,7 @@ class Player(BasePlayer):
             return b.id
 
     def is_transaction_allowed(self, bid_type, value, market):
+        value = float(value)
         if self.day_is_finished:
             return False
         if self.is_mm:
@@ -491,7 +492,7 @@ class Player(BasePlayer):
 
     def addBid(self, data, timestamp):
         bid_type = data.get('type')
-        value = data.get('value')
+        value = float(data.get('value', 0))
         market = data.get('market')
         transaction_allowed = self.is_transaction_allowed(bid_type, value, market)
         if not transaction_allowed:
