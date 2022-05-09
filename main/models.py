@@ -472,46 +472,51 @@ class Player(BasePlayer):
             b.closure_timestamp = timestamp
             b.save()
             return b.id
+    def is_transaction_allowed(self, bid_type, value, market):
+        if self.is_mm:
+            return True  # market makers are allowed to do anything they want without budget or shares lims
+        if bid_type == 'sell':
+            shares = getattr(self, f'shares_{market}')
+            return  shares > 0
+        if bid_type == 'buy':
+            if self.subsession.merged:
+                return self.total_cash() >= value
+            else:
+                return  getattr(self, f'cash_{market}') >= value
 
     def addBid(self, data, timestamp):
-        check_status = not self.is_mm
-        transaction_allowed = self.is_mm
         bid_type = data.get('type')
         value = data.get('value')
         market = data.get('market')
+        transaction_allowed = self.is_transaction_allowed(bid_type, value, market)
+        if not transaction_allowed:
+            logger.warning(f'TRANSACTION  **NOT** ALLOWED for {self.participant.code}: data: {json.dumps(data)}')
+            return
         counterparts = None
         if bid_type == 'sell':
-            if check_status:
-                shares = getattr(self, f'shares_{market}')
-                transaction_allowed = shares > 0
             counterparts = self.group.bids.filter(type='buy', active=True, value__gte=value, market=market).order_by(
                 '-value')
         if bid_type == 'buy':
-            if check_status:
-                if self.subsession.merged:
-                    transaction_allowed = self.total_cash() >= value
-                else:
-                    transaction_allowed = getattr(self, f'cash_{market}') >= value
+
 
             counterparts = self.group.bids.filter(type='sell', active=True, value__lte=value, market=market).order_by(
                 'value')
-        if transaction_allowed:
-            logger.info(f'TRANSACTION ALLOWED for {self.participant.code}: data: {json.dumps(data)}')
-            if counterparts and counterparts.exists():
-                counterpart = counterparts.first()
-                data['bid_id'] = counterpart.id
-                return self.takeBid(data, timestamp)
-            removal_info = dict(bid_to_remove=self.inner_cancel_bid(data, timestamp))
-            injector = data.copy()
-            injector.pop('action', None)
-            injector.pop('trader_id', None)
 
-            b = Bid(trader=self, group=self.group, timestamp=timestamp, active=True,
-                    **injector)
-            b.save()
-            return {0: dict(action='addBid', bid=b.as_dict(), **removal_info)}
-        else:
-            logger.warning(f'TRANSACTION  **NOT** ALLOWED for {self.participant.code}: data: {json.dumps(data)}')
+        logger.info(f'TRANSACTION ALLOWED for {self.participant.code}: data: {json.dumps(data)}')
+        if counterparts and counterparts.exists():
+            counterpart = counterparts.first()
+            data['bid_id'] = counterpart.id
+            return self.takeBid(data, timestamp)
+        removal_info = dict(bid_to_remove=self.inner_cancel_bid(data, timestamp))
+        injector = data.copy()
+        injector.pop('action', None)
+        injector.pop('trader_id', None)
+
+        b = Bid(trader=self, group=self.group, timestamp=timestamp, active=True,
+                **injector)
+        b.save()
+        return {0: dict(action='addBid', bid=b.as_dict(), **removal_info)}
+
 
     def post_new_bids(self, market):
         if not self.is_mm:
@@ -549,8 +554,13 @@ class Player(BasePlayer):
 
     def takeBid(self, data, timestamp):
         bid_id = data.get('bid_id')
+        b = Bid.objects.get(id=bid_id)
+        bid_type = 'buy' if b.type == 'sell' else 'sell'
+        transaction_allowed = self.is_transaction_allowed(bid_type, b.value, b.market)
+        if not transaction_allowed:
+            logger.warning(f'TRANSACTION  **NOT** ALLOWED for {self.participant.code}: data: {json.dumps(data)}; {b.type}, {b.value},{b.market}')
+            return
         with transaction.atomic():
-            b = Bid.objects.get(id=bid_id)
             # b = Bid.objects.select_for_update().get(id=bid_id)
             b.contractor = self
             b.active = False
