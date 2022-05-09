@@ -25,7 +25,8 @@ class Trade(Page):
 
     def js_vars(self):
         return dict(status=self.player.current_status())
-
+    def before_next_page(self):
+        self.player.day_is_finished=True
 
 class ResultsWaitPage(WaitPage):
     after_all_players_arrive = 'set_payoffs'

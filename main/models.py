@@ -61,9 +61,9 @@ def create_scheduled_calls(group, virtuals, day_length):
     for i, v in enumerate(virtuals):
         if not v.is_mm:
             num_calls = random.randint(1, MAX_CALLS)
-            counter+=1
+            counter += 1
             for c in range(num_calls):
-                counter+=1
+                counter += 1
                 eta = timeslots[counter]
                 eta = eta.replace(tzinfo=pytz.UTC)
                 market = random.choice(Constants.markets)
@@ -390,6 +390,7 @@ class Group(BaseGroup):
 
 
 class Player(BasePlayer):
+    day_is_finished = models.BooleanField(initial=False)
     virtual = models.BooleanField(initial=False)
     is_mm = models.BooleanField(initial=False)
     risk_aversion = models.FloatField()  # this is set for MMs only
@@ -415,14 +416,15 @@ class Player(BasePlayer):
     def set_payoff(self):
         self.dividend_A_payoff = round(self.shares_A * self.group.dividend_A, 2)
         self.dividend_B_payoff = round(self.shares_B * self.group.dividend_B, 2)
-        self.stocks_A_payoff =  self.subsession.terminal_A * self.shares_A
-        self.stocks_B_payoff =  self.subsession.terminal_B * self.shares_B
+        self.stocks_A_payoff = self.subsession.terminal_A * self.shares_A
+        self.stocks_B_payoff = self.subsession.terminal_B * self.shares_B
         self.cash_A += self.dividend_A_payoff
         self.cash_B += self.dividend_B_payoff
 
         self.cash_payoff = round(self.total_cash(), 2)
         self.intermediary_payoff = round(self.total_cash() + self.stocks_A_payoff + self.stocks_B_payoff, 2)
-        self.payoff = self.intermediary_payoff # why? because originally we thought about random round. let's keep it like that
+        self.payoff = self.intermediary_payoff  # why? because originally we thought about random round. let's keep it like that
+
     def current_status(self):
         return dict(
             A=dict(shares=self.shares_A,
@@ -472,17 +474,20 @@ class Player(BasePlayer):
             b.closure_timestamp = timestamp
             b.save()
             return b.id
+
     def is_transaction_allowed(self, bid_type, value, market):
+        if self.day_is_finished:
+            return False
         if self.is_mm:
             return True  # market makers are allowed to do anything they want without budget or shares lims
         if bid_type == 'sell':
             shares = getattr(self, f'shares_{market}')
-            return  shares > 0
+            return shares > 0
         if bid_type == 'buy':
             if self.subsession.merged:
                 return self.total_cash() >= value
             else:
-                return  getattr(self, f'cash_{market}') >= value
+                return getattr(self, f'cash_{market}') >= value
 
     def addBid(self, data, timestamp):
         bid_type = data.get('type')
@@ -497,8 +502,6 @@ class Player(BasePlayer):
             counterparts = self.group.bids.filter(type='buy', active=True, value__gte=value, market=market).order_by(
                 '-value')
         if bid_type == 'buy':
-
-
             counterparts = self.group.bids.filter(type='sell', active=True, value__lte=value, market=market).order_by(
                 'value')
 
@@ -516,7 +519,6 @@ class Player(BasePlayer):
                 **injector)
         b.save()
         return {0: dict(action='addBid', bid=b.as_dict(), **removal_info)}
-
 
     def post_new_bids(self, market):
         if not self.is_mm:
@@ -558,7 +560,8 @@ class Player(BasePlayer):
         bid_type = 'buy' if b.type == 'sell' else 'sell'
         transaction_allowed = self.is_transaction_allowed(bid_type, b.value, b.market)
         if not transaction_allowed:
-            logger.warning(f'TRANSACTION  **NOT** ALLOWED for {self.participant.code}: data: {json.dumps(data)}; {b.type}, {b.value},{b.market}')
+            logger.warning(
+                f'TRANSACTION  **NOT** ALLOWED for {self.participant.code}: data: {json.dumps(data)}; {b.type}, {b.value},{b.market}')
             return
         with transaction.atomic():
             # b = Bid.objects.select_for_update().get(id=bid_id)
