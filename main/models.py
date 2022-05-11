@@ -560,9 +560,15 @@ class Player(BasePlayer):
         b = Bid.objects.get(id=bid_id)
         bid_type = 'buy' if b.type == 'sell' else 'sell'
         transaction_allowed = self.is_transaction_allowed(bid_type, b.value, b.market)
-        if not transaction_allowed:
+        counter_part = b.trader
+        counter_transaction_allowed = counter_part.is_transaction_allowed(b.type, b.value, b.market)
+        if not (transaction_allowed):
             logger.warning(
                 f'TRANSACTION  **NOT** ALLOWED for {self.participant.code}: data: {json.dumps(data)}; {b.type}, {b.value},{b.market}')
+            return
+        if not (counter_transaction_allowed):
+            logger.warning(
+                f'TRANSACTION  **NOT** ALLOWED for {counter_part.participant.code}: data: {json.dumps(data)}; {b.type}, {b.value},{b.market}')
             return
         with transaction.atomic():
             # b = Bid.objects.select_for_update().get(id=bid_id)

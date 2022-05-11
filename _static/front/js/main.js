@@ -113,7 +113,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "8fd86f0f758e9e28eb66";
+/******/ 	var hotCurrentHash = "c94a515d48d33ec4dd5e";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -1735,14 +1735,14 @@ eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _nod
 /***/ }),
 
 /***/ 1:
-/*!*************************************************************************************************************************************!*\
-  !*** multi (webpack)/hot/dev-server.js (webpack)-dev-server/client?http://192.168.133.126:8080&sockPath=/sockjs-node ./src/main.js ***!
-  \*************************************************************************************************************************************/
+/*!*******************************************************************************************************************************!*\
+  !*** multi (webpack)/hot/dev-server.js (webpack)-dev-server/client?http://localhost:8080&sockPath=/sockjs-node ./src/main.js ***!
+  \*******************************************************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(/*! /Users/philippchapkovski/Documents/catarina_proj/backend/crossmarket/node_modules/webpack/hot/dev-server.js */"./node_modules/webpack/hot/dev-server.js");
-__webpack_require__(/*! /Users/philippchapkovski/Documents/catarina_proj/backend/crossmarket/node_modules/webpack-dev-server/client/index.js?http://192.168.133.126:8080&sockPath=/sockjs-node */"./node_modules/webpack-dev-server/client/index.js?http://192.168.133.126:8080&sockPath=/sockjs-node");
+__webpack_require__(/*! /Users/philippchapkovski/Documents/catarina_proj/backend/crossmarket/node_modules/webpack-dev-server/client/index.js?http://localhost:8080&sockPath=/sockjs-node */"./node_modules/webpack-dev-server/client/index.js?http://localhost:8080&sockPath=/sockjs-node");
 module.exports = __webpack_require__(/*! /Users/philippchapkovski/Documents/catarina_proj/backend/crossmarket/src/main.js */"./src/main.js");
 
 
