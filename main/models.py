@@ -10,6 +10,7 @@ from otree.api import (
 )
 import logging
 from django.db import transaction
+from django.db.models import Sum
 from api.params import MM_PARAMS
 import pytz
 
@@ -223,7 +224,7 @@ class Group(BaseGroup):
         vals['_index_in_pages'] = vals['_max_page_index']
         num_virtual_players = self.session.config.get('num_virtual_players', 5)
         num_mms = self.session.config.get('num_mms', 1)
-        print(num_mms, 'A' * 100)
+
         virtual_participants = []
         max_id_in_session = Participant.objects.filter(session=self.session).aggregate(Max('id_in_session')).get(
             'id_in_session__max')
@@ -413,6 +414,32 @@ class Player(BasePlayer):
     def stock_value_B(self):
         return self.shares_B * self.group.price_B
 
+    def cancel_unrealistic_bids(self, market):
+        """The logic is following:
+        - if there are any active selling bids in a certain market but number of shares are 0, we cancel those bids
+        - if there are any active buying bids in a certain market but their total value exceeds the cash in this market
+        (or in both markets for merged) then we cancel those bids
+
+        """
+        selling_bids = self.bids.filter(active=True, market=market, type='sell')
+        shares = getattr(self, f'shares_{market}')
+        if shares < 1 and selling_bids.exists():
+            data = dict(market=market, type='sell')
+            timestamp = timezone.now()
+            self.inner_cancel_bid(data, timestamp)
+        # lets deal with buying bids now
+        total_buying_amount = self.bids.filter(active=True, market=market, type='buy').aggregate(Sum('value')).get('value__sum') or 0
+        if self.subsession.merged:
+            cash = self.total_cash()
+        else:
+            cash =  getattr(self, f'cash_{market}')
+        if cash < total_buying_amount:
+            data = dict(market=market, type='buy')
+            timestamp = timezone.now()
+            self.inner_cancel_bid(data, timestamp)
+
+
+
     def set_payoff(self):
         self.dividend_A_payoff = round(self.shares_A * self.group.dividend_A, 2)
         self.dividend_B_payoff = round(self.shares_B * self.group.dividend_B, 2)
@@ -463,6 +490,7 @@ class Player(BasePlayer):
         return a + b
 
     def inner_cancel_bid(self, data, timestamp):
+        print('inner cancelling happen')
         market = data.get('market')
         bid_type = data.get('type')
         bids = self.bids.filter(market=market, active=True, type=bid_type)
@@ -679,6 +707,17 @@ class OrderBook(djmodels.Model):
     initiator = djmodels.ForeignKey(to=Message, on_delete=djmodels.CASCADE, related_name='orders')
     price = models.FloatField()
     type = models.StringField()
+
+
+@receiver(post_save, sender=Player)
+def checking_player(sender, instance, created, **kwargs):
+    update_fields = kwargs.get('update_fields', set())
+    suspects_A = {'cash_A', 'shares_A', }
+    suspects_B = {'cash_B', 'shares_B'}
+    if update_fields & suspects_A:
+        instance.cancel_unrealistic_bids(market='A')
+    elif update_fields & suspects_B:
+        instance.cancel_unrealistic_bids(market='B')
 
 
 @receiver(post_save, sender=Bid)
