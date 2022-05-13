@@ -9,7 +9,7 @@ SESSION_CONFIGS = [
     dict(
         name='market_disjoint',
         display_name="market disjoint",
-        num_demo_participants=2,
+        num_demo_participants=1,
         app_sequence=app_sequence,
         merged=False,
         seed_base=10
@@ -175,21 +175,21 @@ SESSION_CONFIGS = [
 
 SESSION_CONFIG_DEFAULTS = dict(
     real_world_currency_per_point=1.00, participation_fee=0.00, doc="",
-    initial_shares_A=1,
-    initial_shares_B=1,
+    initial_shares_A=2,
+    initial_shares_B=2,
     initial_money_A_virtual=10,
     initial_money_B_virtual=10,
     initial_money_A_human=10,
     initial_money_B_human=10,
     seed_base=10,
-    group_size=2,
+    group_size=1,
     day_length=180,
     dividends_A='0, 0.10, 0.16, 0.22',
     dividends_B='-0.20,-0.10,0,0.10, 0.20',
     terminal_A=1.80,
     terminal_B=2.80,
-    num_virtual_players=0,
-    num_mms=0,
+    num_virtual_players=30,
+    num_mms=10,
     max_calls=6,
     results_wait_time=30
 )
