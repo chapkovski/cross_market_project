@@ -174,6 +174,7 @@ SESSION_CONFIGS = [
 # e.g. self.session.config['participation_fee']
 
 SESSION_CONFIG_DEFAULTS = dict(
+    instructions=True,
     real_world_currency_per_point=1.00, participation_fee=0.00, doc="",
     initial_shares_A=1,
     initial_shares_B=1,

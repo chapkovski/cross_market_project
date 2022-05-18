@@ -17,7 +17,7 @@ class SetParamsWP(WaitPage):
 
 class Intro(Page):
     def is_displayed(self):
-        return self.round_number == 1
+        return self.round_number == 1 and self.session.config.get('instructions')
 
 
 class Trade(Page):
@@ -49,7 +49,7 @@ class FinalResults(Page):
 page_sequence = [
     FirstWP,
     SetParamsWP,
-    # Intro,
+    Intro,
     Trade,
     ResultsWaitPage,
     Results,
