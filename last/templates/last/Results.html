@@ -1,0 +1,23 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}
+    La pagina finale
+{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-body">
+            <div class="lead text-center"> Il suo codice è
+                <div class="text-center"><span class="font-weight-bold display-4">{{ participant.code }}</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="d-none">
+        {% next_button %}
+    </div>
+{% endblock %}
+
+

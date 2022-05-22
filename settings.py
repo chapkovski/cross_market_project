@@ -3,8 +3,10 @@ import os
 EXTENSION_APPS = ['main']
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 app_sequence = [
-    # 'intro',
-    'main']
+    'intro',
+    # 'main',
+    'last'
+    ]
 SESSION_CONFIGS = [
     dict(
         name='market_disjoint',
