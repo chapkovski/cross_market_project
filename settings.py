@@ -3,9 +3,9 @@ import os
 EXTENSION_APPS = ['main']
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 app_sequence = [
-#    'intro',
+   'intro',
     'main',
-#    'last'
+    'last'
     ]
 SESSION_CONFIGS = [
     dict(
@@ -192,7 +192,7 @@ SESSION_CONFIG_DEFAULTS = dict(
     terminal_A=1.80,
     terminal_B=2.80,
     num_virtual_players=30,
-    num_mms=10,
+    num_mms=0,
     max_calls=6,
     results_wait_time=30
 )
