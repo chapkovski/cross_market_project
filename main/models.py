@@ -711,6 +711,8 @@ class OrderBook(djmodels.Model):
 
 @receiver(post_save, sender=Player)
 def checking_player(sender, instance, created, **kwargs):
+    if instance.is_mm:
+        return
     update_fields = kwargs.get('update_fields', set())
     suspects_A = {'cash_A', 'shares_A', }
     suspects_B = {'cash_B', 'shares_B'}
