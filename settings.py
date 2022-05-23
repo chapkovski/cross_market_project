@@ -191,8 +191,8 @@ SESSION_CONFIG_DEFAULTS = dict(
     dividends_B='-0.20,-0.10,0,0.10, 0.20',
     terminal_A=1.80,
     terminal_B=2.80,
-    num_virtual_players=30,
-    num_mms=10,
+    num_virtual_players=0,
+    num_mms=1,
     max_calls=6,
     results_wait_time=30
 )
