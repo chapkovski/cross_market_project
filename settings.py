@@ -14,7 +14,8 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=False,
-        seed_base=10
+        seed_base=10,
+        instructions=False
     ),
     dict(
         name='market_disjoint_20',
@@ -22,7 +23,8 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=False,
-        seed_base=20
+        seed_base=20,
+        instructions=False
     ),
     dict(
         name='market_disjoint_30',
@@ -30,7 +32,8 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=False,
-        seed_base=30
+        seed_base=30,
+        instructions=False
     ),
     dict(
         name='market_disjoint_40',
@@ -38,7 +41,8 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=False,
-        seed_base=40
+        seed_base=40,
+        instructions=False
     ),
     dict(
         name='market_disjoint_50',
@@ -46,7 +50,8 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=False,
-        seed_base=50
+        seed_base=50,
+        instructions=False
     ),
     dict(
         name='market_disjoint_60',
@@ -54,7 +59,8 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=False,
-        seed_base=60
+        seed_base=60,
+        instructions=False
     ),
     dict(
         name='market_disjoint_70',
@@ -62,7 +68,8 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=False,
-        seed_base=70
+        seed_base=70,
+        instructions=False
     ),
     dict(
         name='market_disjoint_80',
@@ -70,7 +77,8 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=False,
-        seed_base=80
+        seed_base=80,
+        instructions=False
     ),
     dict(
         name='market_disjoint_90',
@@ -78,7 +86,8 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=False,
-        seed_base=90
+        seed_base=90,
+        instructions=False
     ),
     dict(
         name='market_disjoint_100',
@@ -86,7 +95,8 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=False,
-        seed_base=100
+        seed_base=100,
+        instructions=False
     ),
     dict(
         name='market_merged',
@@ -94,7 +104,8 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=True,
-        seed_base=10
+        seed_base=10,
+        instructions=False
     ),
     dict(
         name='market_merged_20',
@@ -102,7 +113,8 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=True,
-        seed_base=20
+        seed_base=20,
+        instructions=False
     ),
     dict(
         name='market_merged_30',
@@ -110,7 +122,8 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=True,
-        seed_base=30
+        seed_base=30,
+        instructions=False
     ),
     dict(
         name='market_merged_40',
@@ -118,7 +131,8 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=True,
-        seed_base=40
+        seed_base=40,
+        instructions=False
     ),
     dict(
         name='market_merged_50',
@@ -126,7 +140,8 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=True,
-        seed_base=50
+        seed_base=50,
+        instructions=False
     ),
     dict(
         name='market_merged_60',
@@ -134,7 +149,8 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=True,
-        seed_base=60
+        seed_base=60,
+        instructions=False
     ),
     dict(
         name='market_merged_70',
@@ -142,7 +158,8 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=True,
-        seed_base=70
+        seed_base=70,
+        instructions=False
     ),
     dict(
         name='market_merged_80',
@@ -150,6 +167,7 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=True,
+        instructions=False,
         seed_base=80
     ),
     dict(
@@ -158,6 +176,7 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=True,
+        instructions=False,
         seed_base=90
     ),
     dict(
@@ -166,6 +185,7 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=True,
+        instructions=False,
         seed_base=100
     )
 ]
@@ -191,8 +211,8 @@ SESSION_CONFIG_DEFAULTS = dict(
     dividends_B='-0.20,-0.10,0,0.10, 0.20',
     terminal_A=1.80,
     terminal_B=2.80,
-    num_virtual_players=0,
-    num_mms=1,
+    num_virtual_players=30,
+    num_mms=10,
     max_calls=6,
     results_wait_time=30
 )
