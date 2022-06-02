@@ -428,17 +428,16 @@ class Player(BasePlayer):
             timestamp = timezone.now()
             self.inner_cancel_bid(data, timestamp)
         # lets deal with buying bids now
-        total_buying_amount = self.bids.filter(active=True, market=market, type='buy').aggregate(Sum('value')).get('value__sum') or 0
+        total_buying_amount = self.bids.filter(active=True, market=market, type='buy').aggregate(Sum('value')).get(
+            'value__sum') or 0
         if self.subsession.merged:
             cash = self.total_cash()
         else:
-            cash =  getattr(self, f'cash_{market}')
+            cash = getattr(self, f'cash_{market}')
         if cash < total_buying_amount:
             data = dict(market=market, type='buy')
             timestamp = timezone.now()
             self.inner_cancel_bid(data, timestamp)
-
-
 
     def set_payoff(self):
         self.dividend_A_payoff = round(self.shares_A * self.group.dividend_A, 2)
@@ -490,7 +489,6 @@ class Player(BasePlayer):
         return a + b
 
     def inner_cancel_bid(self, data, timestamp):
-        print('inner cancelling happen')
         market = data.get('market')
         bid_type = data.get('type')
         bids = self.bids.filter(market=market, active=True, type=bid_type)
@@ -613,11 +611,11 @@ class Player(BasePlayer):
             bids = self.group.get_active_bids()
             msg_to_everyone = dict(action='setBids', bids=bids, market=b.market, price=b.value,
                                    )
-            msg_to_trader = dict(action='setBids', bids=bids, market=b.market, price=b.value,
+            msg_to_trader = dict(**msg_to_everyone,
                                  status=b.trader.current_status(),
                                  )
-            msg_to_contractor = dict(action='setBids', bids=bids, market=b.market, price=b.value,
-                                     status=self.current_status(), )
+            msg_to_contractor = dict(**msg_to_everyone,
+                                     status=self.current_status())
 
             all_others = [i.id_in_group for i in self.get_others_in_group() if i != b.trader]
             res = {i: msg_to_everyone for i in all_others}

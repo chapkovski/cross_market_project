@@ -4,7 +4,7 @@ from otree.live import live_payload_function, _live_send_back
 from api.utils import nt_quote_wrapper
 from main.models import Group, Player, Constants, BidType
 from django.utils import timezone
-
+from pprint import  pprint
 bid_types = ['sell', 'buy']
 
 
@@ -17,12 +17,10 @@ def handle_update(group_id, virtual_id, market, quote, eta):
     timestamp = eta
     data = dict(type=bid_type, market=market, value=round(quote.get('quote'), 2))
     resp = virtual.addBid(data, timestamp)
-    price = getattr(group, f'price_{market}')
-    bids = group.get_active_bids()
 
     for i in group.get_non_virtuals():
-        msg = {i.participant.code: dict(timestamp=timestamp.strftime('%m_%d_%Y_%H_%M_%S'), action='setBids', bids=bids,
-                                        market=market, price=price)
+        msg = {i.participant.code: dict(timestamp=timestamp.strftime('%m_%d_%Y_%H_%M_%S'), **resp.get(i.id_in_group,{}))
                }
+
         _live_send_back(i.participant._session_code, i.participant._index_in_pages,
                         msg)
