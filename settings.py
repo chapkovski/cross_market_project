@@ -187,6 +187,116 @@ SESSION_CONFIGS = [
         merged=True,
         instructions=False,
         seed_base=100
+    ),
+    dict(
+        name='market_merged_prof_10',
+        display_name="market merged prof 10",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=10
+    ),
+    dict(
+        name='market_merged_prof_20',
+        display_name="market merged prof 20",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=20
+    ),
+    dict(
+        name='market_merged_prof_30',
+        display_name="market merged prof 30",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=30
+    ),
+    dict(
+        name='market_merged_prof_40',
+        display_name="market merged prof 40",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=40
+    ),
+    dict(
+        name='market_merged_prof_50',
+        display_name="market merged prof 50",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=50
+    ),
+    dict(
+        name='market_merged_prof_60',
+        display_name="market merged prof 60",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=60
+    ),
+    dict(
+        name='market_merged_prof_70',
+        display_name="market merged prof 70",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=70
+    ),
+    dict(
+        name='market_merged_prof_80',
+        display_name="market merged prof 80",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=80
+    ),
+    dict(
+        name='market_merged_prof_90',
+        display_name="market merged prof 90",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=90
+    ),
+    dict(
+        name='market_merged_prof_100',
+        display_name="market merged prof 100",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=True,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=100
     )
 ]
 
