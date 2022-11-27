@@ -15,7 +15,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=False,
         seed_base=10,
-        instructions=False
+        instructions=False,
+        num_virtual_players=40
     ),
     dict(
         name='market_disjoint_20',
@@ -24,7 +25,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=False,
         seed_base=20,
-        instructions=False
+        instructions=False,
+        num_virtual_players=40
     ),
     dict(
         name='market_disjoint_30',
@@ -33,7 +35,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=False,
         seed_base=30,
-        instructions=False
+        instructions=False,
+        num_virtual_players=40
     ),
     dict(
         name='market_disjoint_40',
@@ -42,7 +45,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=False,
         seed_base=40,
-        instructions=False
+        instructions=False,
+        num_virtual_players=40
     ),
     dict(
         name='market_disjoint_50',
@@ -51,7 +55,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=False,
         seed_base=50,
-        instructions=False
+        instructions=False,
+        num_virtual_players=40
     ),
     dict(
         name='market_disjoint_60',
@@ -60,7 +65,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=False,
         seed_base=60,
-        instructions=False
+        instructions=False,
+        num_virtual_players=40
     ),
     dict(
         name='market_disjoint_70',
@@ -69,7 +75,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=False,
         seed_base=70,
-        instructions=False
+        instructions=False,
+        num_virtual_players=40
     ),
     dict(
         name='market_disjoint_80',
@@ -78,7 +85,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=False,
         seed_base=80,
-        instructions=False
+        instructions=False,
+        num_virtual_players=40
     ),
     dict(
         name='market_disjoint_90',
@@ -87,7 +95,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=False,
         seed_base=90,
-        instructions=False
+        instructions=False,
+        num_virtual_players=40
     ),
     dict(
         name='market_disjoint_100',
@@ -96,7 +105,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=False,
         seed_base=100,
-        instructions=False
+        instructions=False,
+        num_virtual_players=40
     ),
     dict(
         name='market_merged',
@@ -105,7 +115,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=True,
         seed_base=10,
-        instructions=False
+        instructions=False,
+        num_virtual_players=40
     ),
     dict(
         name='market_merged_20',
@@ -114,7 +125,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=True,
         seed_base=20,
-        instructions=False
+        instructions=False,
+        num_virtual_players=40
     ),
     dict(
         name='market_merged_30',
@@ -123,7 +135,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=True,
         seed_base=30,
-        instructions=False
+        instructions=False,
+        num_virtual_players=40
     ),
     dict(
         name='market_merged_40',
@@ -132,7 +145,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=True,
         seed_base=40,
-        instructions=False
+        instructions=False,
+        num_virtual_players=40
     ),
     dict(
         name='market_merged_50',
@@ -141,7 +155,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=True,
         seed_base=50,
-        instructions=False
+        instructions=False,
+        num_virtual_players=40
     ),
     dict(
         name='market_merged_60',
@@ -150,7 +165,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=True,
         seed_base=60,
-        instructions=False
+        instructions=False,
+        num_virtual_players=40
     ),
     dict(
         name='market_merged_70',
@@ -159,7 +175,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=True,
         seed_base=70,
-        instructions=False
+        instructions=False,
+        num_virtual_players=40
     ),
     dict(
         name='market_merged_80',
@@ -168,7 +185,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=True,
         instructions=False,
-        seed_base=80
+        seed_base=80,
+        num_virtual_players=40
     ),
     dict(
         name='market_merged_90',
@@ -177,7 +195,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=True,
         instructions=False,
-        seed_base=90
+        seed_base=90,
+        num_virtual_players=40
     ),
     dict(
         name='market_merged_100',
@@ -186,7 +205,8 @@ SESSION_CONFIGS = [
         app_sequence=app_sequence,
         merged=True,
         instructions=False,
-        seed_base=100
+        seed_base=100,
+        num_virtual_players=40
     ),
     dict(
         name='market_merged_prof_10',
@@ -293,6 +313,116 @@ SESSION_CONFIGS = [
         num_demo_participants=1,
         app_sequence=app_sequence,
         merged=True,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=100
+    ),
+    dict(
+        name='market_disjoint_prof_10',
+        display_name="market disjoint prof 10",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=10
+    ),
+    dict(
+        name='market_disjoint_prof_20',
+        display_name="market disjoint prof 20",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=20
+    ),
+    dict(
+        name='market_disjoint_prof_30',
+        display_name="market disjoint prof 30",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=30
+    ),
+    dict(
+        name='market_disjoint_prof_40',
+        display_name="market disjoint prof 40",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=40
+    ),
+    dict(
+        name='market_disjoint_prof_50',
+        display_name="market disjoint prof 50",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=50
+    ),
+    dict(
+        name='market_disjoint_prof_60',
+        display_name="market disjoint prof 60",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=60
+    ),
+    dict(
+        name='market_disjoint_prof_70',
+        display_name="market disjoint prof 70",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=70
+    ),
+    dict(
+        name='market_disjoint_prof_80',
+        display_name="market disjoint prof 80",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=80
+    ),
+    dict(
+        name='market_disjoint_prof_90',
+        display_name="market disjoint prof 90",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
+        instructions=False,
+        day_length=90,
+        num_virtual_players=15,
+        seed_base=90
+    ),
+    dict(
+        name='market_disjoint_prof_100',
+        display_name="market disjoint prof 100",
+        num_demo_participants=1,
+        app_sequence=app_sequence,
+        merged=False,
         instructions=False,
         day_length=90,
         num_virtual_players=15,
