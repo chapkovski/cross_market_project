@@ -16,7 +16,7 @@ SESSION_CONFIGS = [
         merged=False,
         seed_base=10,
         instructions=False,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_disjoint_20',
@@ -26,7 +26,7 @@ SESSION_CONFIGS = [
         merged=False,
         seed_base=20,
         instructions=False,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_disjoint_30',
@@ -36,7 +36,7 @@ SESSION_CONFIGS = [
         merged=False,
         seed_base=30,
         instructions=False,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_disjoint_40',
@@ -46,7 +46,7 @@ SESSION_CONFIGS = [
         merged=False,
         seed_base=40,
         instructions=False,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_disjoint_50',
@@ -56,7 +56,7 @@ SESSION_CONFIGS = [
         merged=False,
         seed_base=50,
         instructions=False,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_disjoint_60',
@@ -66,7 +66,7 @@ SESSION_CONFIGS = [
         merged=False,
         seed_base=60,
         instructions=False,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_disjoint_70',
@@ -76,7 +76,7 @@ SESSION_CONFIGS = [
         merged=False,
         seed_base=70,
         instructions=False,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_disjoint_80',
@@ -86,7 +86,7 @@ SESSION_CONFIGS = [
         merged=False,
         seed_base=80,
         instructions=False,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_disjoint_90',
@@ -96,7 +96,7 @@ SESSION_CONFIGS = [
         merged=False,
         seed_base=90,
         instructions=False,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_disjoint_100',
@@ -106,7 +106,7 @@ SESSION_CONFIGS = [
         merged=False,
         seed_base=100,
         instructions=False,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_merged',
@@ -116,7 +116,7 @@ SESSION_CONFIGS = [
         merged=True,
         seed_base=10,
         instructions=False,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_merged_20',
@@ -126,7 +126,7 @@ SESSION_CONFIGS = [
         merged=True,
         seed_base=20,
         instructions=False,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_merged_30',
@@ -136,7 +136,7 @@ SESSION_CONFIGS = [
         merged=True,
         seed_base=30,
         instructions=False,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_merged_40',
@@ -146,7 +146,7 @@ SESSION_CONFIGS = [
         merged=True,
         seed_base=40,
         instructions=False,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_merged_50',
@@ -156,7 +156,7 @@ SESSION_CONFIGS = [
         merged=True,
         seed_base=50,
         instructions=False,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_merged_60',
@@ -166,7 +166,7 @@ SESSION_CONFIGS = [
         merged=True,
         seed_base=60,
         instructions=False,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_merged_70',
@@ -176,7 +176,7 @@ SESSION_CONFIGS = [
         merged=True,
         seed_base=70,
         instructions=False,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_merged_80',
@@ -186,7 +186,7 @@ SESSION_CONFIGS = [
         merged=True,
         instructions=False,
         seed_base=80,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_merged_90',
@@ -196,7 +196,7 @@ SESSION_CONFIGS = [
         merged=True,
         instructions=False,
         seed_base=90,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_merged_100',
@@ -206,7 +206,7 @@ SESSION_CONFIGS = [
         merged=True,
         instructions=False,
         seed_base=100,
-        num_virtual_players=40
+        num_virtual_players=30
     ),
     dict(
         name='market_merged_prof_10',
