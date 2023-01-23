@@ -23,6 +23,18 @@ app_sequence = [
     'last'
 ]
 SESSION_CONFIGS = [
+
+    dict(
+        name='intro_last',
+        display_name="Testing intro and last",
+        num_demo_participants=1,
+        app_sequence=['intro',
+    # 'main',
+    'last'],
+        
+        instructions=True,
+        
+    ),
     dict(
         name='market_disjoint',
         display_name="market disjoint",
