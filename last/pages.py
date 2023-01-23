@@ -16,9 +16,26 @@ class Q1(Page):
         'studente'
     ]
 
+class QProf(Page):
+    form_model = 'player'
+    form_fields = [
+        'fin1',
+        'fin2',
+        'fin3',
+        'eta',
+        'sesso',
+        'istruzione',
+        'robo1',
+        'robo2'
+        ]
+
 
 class Results(Page):
     pass
 
 
-page_sequence = [Q1, Results]
+# page sequence for students
+# page_sequence = [Q1, Results]
+
+# page_sequence for professionals
+page_sequence = [Results, QProf]

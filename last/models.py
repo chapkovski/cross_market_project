@@ -48,7 +48,19 @@ class Player(BasePlayer):
         widget=widgets.RadioSelectHorizontal,
     )
 
+    robo1 = models.IntegerField(
+        choices=[[1, "sì"], [2, "no"]],
+        label="Hai usato robo-advisors in passato?",
+        widget=widgets.RadioSelectHorizontal,
+    )
+    robo2 = models.IntegerField(
+        choices=[[1, "sì"], [2, "no"], [3, "non so"]],
+        label="Sei disposto ad usare robo-advisors in futuro per consigliare le tue scelte finanziarie?",
+        widget=widgets.RadioSelectHorizontal,
+    )
+
     eta = models.IntegerField(label="Quanti anni hai?", max=60, min=18)
+
     sesso = models.StringField(
         choices=[["Maschio", "Maschio"], ["Femmina ", "Femmina "], ["Altro", "Altro"]],
         label="Qual è il tuo sesso?",
@@ -89,4 +101,16 @@ class Player(BasePlayer):
         widget=widgets.RadioSelect,
     )
 
+    istruzione = models.StringField(
+        blank=False,
+        choices=[
+            ["Dottorato", "Dottorato"],
+            ["Laurea specialistica", "Laurea specialistica"],
+            ["Laurea triennale", "Laurea triennale"],
+            ["Diploma", "Diploma"],
+            ["Altro", "Altro"],
+        ],
+        label="Seleziona l'opzione che ti riguarda",
+        widget=widgets.RadioSelect,
+    )
 
