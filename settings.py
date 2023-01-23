@@ -1,12 +1,27 @@
+from redis import ConnectionPool
+from huey import RedisHuey
 from os import environ
 import os
+
+ROOMS = [
+    dict(
+        name='room1',
+        display_name='Room 1'),
+    dict(
+        name='room2',
+        display_name='Room 2'),
+    dict(
+        name='room3',
+        display_name='Room 3'),
+
+]
 EXTENSION_APPS = ['main']
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 app_sequence = [
-   'intro',
+    'intro',
     'main',
     'last'
-    ]
+]
 SESSION_CONFIGS = [
     dict(
         name='market_disjoint',
@@ -486,8 +501,6 @@ CHANNEL_LAYERS = {
 
     },
 }
-from huey import RedisHuey
-from redis import ConnectionPool
 
 REDIS_URL = os.environ.get('REDIS_URL', "redis://localhost:6379")
 
