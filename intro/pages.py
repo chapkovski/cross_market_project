@@ -17,4 +17,5 @@ class CQ(Page):
         return [f'question{i}' for i in range(1, 6)]
 
 
-page_sequence = [Intro, CQ]
+#page_sequence = [Intro, CQ]
+page_sequence = [Intro]
