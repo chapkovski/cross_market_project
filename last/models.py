@@ -48,8 +48,6 @@ class Player(BasePlayer):
         widget=widgets.RadioSelectHorizontal,
     )
 
-    exp = models.IntegerField(label="Come valuteresti la tua tua esperienza?", max=60, min=18)
-
     robo1 = models.IntegerField(
         choices=[[1, "sì"], [2, "no"]],
         label="Hai usato robo-advisors in passato?",
@@ -60,6 +58,8 @@ class Player(BasePlayer):
         label="Sei disposto ad usare robo-advisors in futuro per consigliare le tue scelte finanziarie?",
         widget=widgets.RadioSelectHorizontal,
     )
+
+    exp = models.IntegerField(label="Come valuteresti la tua esperienza pregressa nei mercati finanziari reali (bassa 1 alta 10)?", max=1, min=10)
 
     eta = models.IntegerField(label="Quanti anni hai?", max=60, min=18)
 
