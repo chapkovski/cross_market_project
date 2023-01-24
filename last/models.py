@@ -69,7 +69,7 @@ class Player(BasePlayer):
         widget=widgets.RadioSelect,
     )
 
-    corso_studio=models.StringField(
+    corso_studio = models.StringField(
             choices=[
                 ["Agraria", "Agraria"],
                 ["Biologia", "Biologia"],
@@ -115,4 +115,3 @@ class Player(BasePlayer):
         label="Seleziona l'opzione che ti riguarda",
         widget=widgets.RadioSelect,
     )
-
