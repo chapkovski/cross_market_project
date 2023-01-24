@@ -59,7 +59,11 @@ class Player(BasePlayer):
         widget=widgets.RadioSelectHorizontal,
     )
 
-    exp = models.IntegerField(label="Come valuteresti la tua esperienza pregressa nei mercati finanziari reali (bassa 1 alta 10)?", max=1, min=10)
+    exp = models.IntegerField(
+        choices=[[1, "1 (bassa)"], [2, "no"], [7, "7 (alta)"]],
+        label="Come valuteresti la tua esperienza con i mercati finanziari reali?",
+        widget=widgets.RadioSelectHorizontal,
+    )
 
     eta = models.IntegerField(label="Quanti anni hai?", max=60, min=18)
 
