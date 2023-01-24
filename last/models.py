@@ -60,7 +60,7 @@ class Player(BasePlayer):
     )
 
     exp = models.IntegerField(
-        choices=[[1, "1 (bassa)"], [2, "no"], [7, "7 (alta)"]],
+        choices=[[1, "1 (bassa)"], [2, "2"], [3, "3"], [4, "4"],[5, "5"],[6, "6"], [7, "7 (alta)"]],
         label="Come valuteresti la tua esperienza con i mercati finanziari reali?",
         widget=widgets.RadioSelectHorizontal,
     )
