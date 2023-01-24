@@ -27,7 +27,7 @@ class QProf(Page):
         'istruzione',
         'robo1',
         'robo2',
-        'esperienza'
+        'exp'
         ]
 
 
