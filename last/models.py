@@ -48,6 +48,12 @@ class Player(BasePlayer):
         widget=widgets.RadioSelectHorizontal,
     )
 
+    esperienza = models.IntegerField(
+        choices=[[1, "1"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"], [7, "7"]],
+        label=" Come valuteresti il tuo grado di esperienza con i mercati finanziari reali (1 bassa, 7 molto alta)?",
+        widget=widgets.RadioSelectHorizontal,
+    )
+
     robo1 = models.IntegerField(
         choices=[[1, "sì"], [2, "no"]],
         label="Hai usato robo-advisors in passato?",
