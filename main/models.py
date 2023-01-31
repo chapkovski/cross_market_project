@@ -509,6 +509,7 @@ class Player(BasePlayer):
             return True  # market makers are allowed to do anything they want without budget or shares lims
         if bid_type == 'sell':
             shares = getattr(self, f'shares_{market}')
+            if shares is None: return False
             return shares > 0
         if bid_type == 'buy':
             if self.subsession.merged:
@@ -523,7 +524,7 @@ class Player(BasePlayer):
         transaction_allowed = self.is_transaction_allowed(bid_type, value, market)
         if not transaction_allowed:
             logger.warning(f'TRANSACTION  **NOT** ALLOWED for {self.participant.code}: data: {json.dumps(data)}')
-            return
+            return 
         counterparts = None
         if bid_type == 'sell':
             counterparts = self.group.bids.filter(type='buy', active=True, value__gte=value, market=market).order_by(

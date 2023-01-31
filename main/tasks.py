@@ -16,8 +16,8 @@ def handle_update(group_id, virtual_id, market, quote, eta):
     bid_type = bid_types[quote.get('direction')]
     timestamp = eta
     data = dict(type=bid_type, market=market, value=round(quote.get('quote'), 2))
-    resp = virtual.addBid(data, timestamp)
-
+    resp = virtual.addBid(data, timestamp) or {}
+    
     for i in group.get_non_virtuals():
         msg = {i.participant.code: dict(timestamp=timestamp.strftime('%m_%d_%Y_%H_%M_%S'), **resp.get(i.id_in_group,{}))
                }
