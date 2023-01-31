@@ -59,6 +59,12 @@ class Player(BasePlayer):
         widget=widgets.RadioSelectHorizontal,
     )
 
+    exp = models.IntegerField(
+        choices=[[1, "1 (bassa)"], [2, "2"], [3, "3"], [4, "4"],[5, "5"],[6, "6"], [7, "7 (alta)"]],
+        label="Come valuteresti la tua esperienza con i mercati finanziari reali?",
+        widget=widgets.RadioSelectHorizontal,
+    )
+
     eta = models.IntegerField(label="Quanti anni hai?", max=60, min=18)
 
     sesso = models.StringField(
@@ -67,7 +73,7 @@ class Player(BasePlayer):
         widget=widgets.RadioSelect,
     )
 
-    corso_studio=models.StringField(
+    corso_studio = models.StringField(
             choices=[
                 ["Agraria", "Agraria"],
                 ["Biologia", "Biologia"],
@@ -113,4 +119,3 @@ class Player(BasePlayer):
         label="Seleziona l'opzione che ti riguarda",
         widget=widgets.RadioSelect,
     )
-

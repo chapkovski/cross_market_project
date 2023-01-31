@@ -26,7 +26,8 @@ class QProf(Page):
         'sesso',
         'istruzione',
         'robo1',
-        'robo2'
+        'robo2',
+        'exp'
         ]
 
 
