@@ -6,11 +6,19 @@ from main.models import Group, Player, Constants, BidType
 from django.utils import timezone
 from pprint import  pprint
 bid_types = ['sell', 'buy']
+import logging
+ 
 
+logger = logging.getLogger(__name__)
 
 @db_task()
 def handle_update(group_id, virtual_id, market, quote, eta):
-    virtual = Player.objects.get(id=virtual_id)
+    try:
+        virtual = Player.objects.get(id=virtual_id)
+    except Exception as e:
+        print(e)
+        logger.error(f'Cant get participant for particapnt code {virtual_id}')
+        return
     # Check for attainability: inventory condition (cash and shares) and one-side condition (they can post to only
     group = Group.objects.get(id=group_id)
     bid_type = bid_types[quote.get('direction')]

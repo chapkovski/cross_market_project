@@ -38,8 +38,8 @@ import numpy as np
 """
 
 # from .matlab_connector import get_mm_bids, get_nt_quote
-VIRTUAL_PREFIX = 'VIRTUAL_'
-MARKET_MAKER_PREFIX = 'MARKET_MAKER'
+VIRTUAL_PREFIX = 'virtual'
+MARKET_MAKER_PREFIX = 'marketmaker'
 author = 'Philipp Chapkovski, HSE'
 
 doc = """
@@ -141,6 +141,7 @@ class Subsession(BaseSubsession):
 
     def creating_session(self):
         c = self.session.config
+        # assert c.get('group_size') == self.session.num_participants, 'Group size should be the same as number participants in session!'
         day_length = c.get('day_length', 300)
         num_virtual_players = c.get('num_virtual_players', 5)
         MAX_CALLS = c.get('max_calls', 5)
@@ -221,7 +222,7 @@ class Group(BaseGroup):
                   '_round_number',
                   '_max_page_index']
         vals = {i: getattr(example_p, i) for i in params}
-        vals['_index_in_pages'] = vals['_max_page_index']
+        vals['_index_in_pages'] = vals['_max_page_index']+1
         num_virtual_players = self.session.config.get('num_virtual_players', 5)
         num_mms = self.session.config.get('num_mms', 1)
 
@@ -253,8 +254,9 @@ class Group(BaseGroup):
                 **vals
             )
             virtual_participants.append(mm)
-        Participant.objects.bulk_create(virtual_participants)
-        virtual_participants = Participant.objects.filter(session=self.session, code__startswith=VIRTUAL_PREFIX)
+        vsparts = Participant.objects.bulk_create(virtual_participants)
+        codes = [i.code for i in vsparts]
+        virtual_participants = Participant.objects.filter(code__in=codes)
         self.session.num_participants += len(virtual_participants)
         self.session.save()
         virtual_players = []
@@ -269,7 +271,7 @@ class Group(BaseGroup):
                 virtual_players.append(pl)
 
         Player.objects.bulk_create(virtual_players)
-
+        
         # ENDO OF BLOCK: creating virtual players
 
     def get_virtual_players(self):
@@ -343,12 +345,16 @@ class Group(BaseGroup):
                     p.shares_B = initial_shares_B
 
         else:
-
+            
             for p in self.get_players():
-                p.cash_A = p.in_round(r).cash_A
-                p.cash_B = p.in_round(r).cash_B
-                p.shares_A = p.in_round(r).shares_A
-                p.shares_B = p.in_round(r).shares_B
+                prev_player= p.in_round(r)
+                # prev_player = p.participant.player_set.filter(round_number=r).first()
+                # print("PREVPLAYER FOUND:", prev_player)
+
+                p.cash_A = prev_player.cash_A
+                p.cash_B = prev_player.cash_B
+                p.shares_A = prev_player.shares_A
+                p.shares_B = prev_player.shares_B
 
         #
         # the following block is not necessary but is convenient to trace virtuals in Data section
