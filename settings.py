@@ -35,6 +35,23 @@ SESSION_CONFIGS = [
         instructions=True,
         
     ),
+
+    dict(
+        name='quicktest',
+        display_name="FOR DEBUGGING ONLY!",
+        num_demo_participants=2,
+        app_sequence=app_sequence,
+        merged=True,
+        seed_base=110,
+        instructions=False,
+        num_virtual_players=3,
+        num_mms=1,
+        group_size=2,
+        day_length=18,
+            results_wait_time=10
+    ),
+
+
     dict(
         name='market_disjoint',
         display_name="market disjoint",

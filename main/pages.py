@@ -22,7 +22,7 @@ class Intro(Page):
 
 class Trade(Page):
     live_method = 'register_event'
-
+    timeout_seconds=10
     def js_vars(self):
         return dict(status=self.player.current_status())
     def before_next_page(self):
