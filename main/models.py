@@ -743,7 +743,8 @@ def save_profile(sender, instance, created, **kwargs):
     orders = [OrderBook(initiator=m, price=i.get('value'), type=i.get('type')) for i in bids]
     OrderBook.objects.bulk_create(orders)
 
-class Player(BasePlayer):
+
+
     felice = models.IntegerField(
     choices=[[1, "1 (bassa)"], [2, "2"], [3, "3"], [4, "4"],[5, "5"],[6, "6"], [7, "7 (alta)"]],
     label="Quanto sei stato felice negli ultimi 5 periodi?",
