@@ -412,6 +412,48 @@ class Player(BasePlayer):
     stocks_B_payoff = models.FloatField()
     cash_payoff = models.FloatField()
 
+    felice = models.IntegerField(
+        choices=[[1, "1 (bassa)"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"], [7, "7 (alta)"]],
+        label="Quanto sei stato felice negli ultimi 5 periodi?",
+        widget=widgets.RadioSelectHorizontal,
+    )
+
+    triste = models.IntegerField(
+        choices=[[1, "1 (bassa)"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"], [7, "7 (alta)"]],
+        label="Quanto sei stato triste negli ultimi 5 periodi?",
+        widget=widgets.RadioSelectHorizontal,
+    )
+
+    sorpreso = models.IntegerField(
+        choices=[[1, "1 (bassa)"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"], [7, "7 (alta)"]],
+        label="Quanto sei stato sorpreso negli ultimi 5 periodi?",
+        widget=widgets.RadioSelectHorizontal,
+    )
+
+    disgustato = models.IntegerField(
+        choices=[[1, "1 (bassa)"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"], [7, "7 (alta)"]],
+        label="Quanto sei stato disgustato negli ultimi 5 periodi?",
+        widget=widgets.RadioSelectHorizontal,
+    )
+
+    ansia = models.IntegerField(
+        choices=[[1, "1 (bassa)"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"], [7, "7 (alta)"]],
+        label="Quanto sei stato ansioso negli ultimi 5 periodi?",
+        widget=widgets.RadioSelectHorizontal,
+    )
+
+    spaventato = models.IntegerField(
+        choices=[[1, "1 (bassa)"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"], [7, "7 (alta)"]],
+        label="Quanto hai avuto paura negli ultimi 5 periodi?",
+        widget=widgets.RadioSelectHorizontal,
+    )
+
+    annoiato = models.IntegerField(
+        choices=[[1, "1 (bassa)"], [2, "2"], [3, "3"], [4, "4"], [5, "5"], [6, "6"], [7, "7 (alta)"]],
+        label="Quanto ti sei sentito annoiato negli ultimi 5 periodi?",
+        widget=widgets.RadioSelectHorizontal,
+    )
+
     @property
     def stock_value_A(self):
         return self.shares_A * self.group.price_A
@@ -770,3 +812,4 @@ def save_profile(sender, instance, created, **kwargs):
     bids = instance.group.bids.filter(active=True, market=instance.market, timestamp__lte=now).values('value', 'type')
     orders = [OrderBook(initiator=m, price=i.get('value'), type=i.get('type')) for i in bids]
     OrderBook.objects.bulk_create(orders)
+

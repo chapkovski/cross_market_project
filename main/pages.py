@@ -44,6 +44,12 @@ class Results(Page):
         return self.session.config.get('results_wait_time', 20)
 
 
+class Emotion(Page):
+    form_model = 'player'
+    form_fields = ['triste','sorpreso', 'disgustato','felice', 'ansia','spaventato', 'annoiato']
+    def is_displayed(self):
+        return self.round_number in [5,10,15]
+
 class FinalResults(Page):
     def is_displayed(self):
         return self.round_number == Constants.num_rounds
@@ -58,5 +64,6 @@ page_sequence = [
     Trade,
     ResultsWaitPage,
     Results,
+    Emotion,
     FinalResults
 ]
