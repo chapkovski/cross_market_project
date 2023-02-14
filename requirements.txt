@@ -13,3 +13,4 @@ redis==3.3.8
 channels-redis
 numpy
 scipy
+dateparser
