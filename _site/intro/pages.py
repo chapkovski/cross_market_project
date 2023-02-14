@@ -4,7 +4,6 @@ from .models import Constants
 
 
 class Intro(Page):
-    live_method = 'register_page_arrival'
     def is_displayed(self):
         return  self.session.config.get('instructions')
 

@@ -714,27 +714,6 @@ class OrderBook(djmodels.Model):
     type = models.StringField()
 
 
-class PageRegister(djmodels.Model):
-    client_time_str=models.StringField()
-    server_time_str=models.StringField()
-    client_timezone =models.StringField()
-    client_offset =models.IntegerField()
-    client_time=djmodels.DateTimeField(null=True)
-    server_time=djmodels.DateTimeField(null=True)
-    page_name=models.StringField()
-    owner=djmodels.ForeignKey(to=Participant, on_delete=djmodels.CASCADE, related_name='pregisters')
-
-
-def custom_export(players):
-    yield ['participant', 'page name', 'client time', 'server time', 'client timezone', 'client_offset', 'client time (original)', 'server time (original)']
-
-    # 'filter' without any args returns everything
-    prs = PageRegister.objects.all()
-    for p in prs:
-        yield [p.owner.code, p.page_name, p.client_time, p.server_time, p.client_timezone, p.client_offset, p.client_time_str, p.server_time_str]
-
-
-
 @receiver(post_save, sender=Player)
 def checking_player(sender, instance, created, **kwargs):
     if instance.is_mm:

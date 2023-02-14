@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!-- Commento
+
+<p>Caro partecipante, ti diamo il benvenuto a questa sessione sperimentale e ti chiediamo gentilmente di astenerti dal parlare con gli altri partecipanti&nbsp; per tutta la durata dell'esperimento. In caso di difficolt&agrave;, ti invitiamo a  contattare uno dei supervisori.</p>
+<p>Questo esperimento durer&agrave; circa 1 ora. Per la tua partecipazione riceverai 5 Euro. In base alla scelte che farai durante questo esperimento, potrai guadagnare altri Euro. La valuta di questo esperimento sar&agrave; l<strong>'ECU</strong>. Guadagnerai <strong>ECU</strong> che si tradurranno in Euro alla fine dell'esperimento.</p>
+<div id="magicparlabel-50351" class="standard" style="text-align: center;"><strong>Un ECU corrisponde a {{ session.config.real_world_currency_per_point }} Euro (ossia 1 ECU= {{ session.config.real_world_currency_per_point }} Euro). </strong></div>
+-->
+<h3 style="text-decoration: underline;"> Informazioni generali </h3>
+
+<p style="text-align: justify;">Questo esperimento riproduce&nbsp; un mercato in cui i traders possono scambiare le azioni di due societ&agrave; fittizie, denominate semplicemente <strong>societ&agrave; A</strong> e <strong>societ&agrave; B</strong>, per <strong>15 periodi consecutivi</strong>.</p>
+<p style="text-align: justify;">&nbsp;</p>
+
+
+<h3 style="text-decoration: underline;"> Descrizione del mercato </h3>
+
+
+<p style="text-align: justify;">Il mercato &egrave; composto da 40 soggetti: 10 trader umani e 30 trader artificiali, ovvero algoritmi. Ciascuno dei 10 trader umani (e quindi te stesso) riceve una dotazione iniziale di <strong>4 azioni</strong>&nbsp;in aggiunta a del denaro virtuale (ECU): <strong>due azioni del bene A</strong>, <strong>due azioni del bene B</strong>, pi&ugrave;<strong> 20 ECU</strong> in contanti.
+    All'inizio dell'esperimento, una azione di tipo A ha un valore fondamentale <b> stimato </b> (di seguito VF) di <strong>3,60 ECU</strong>, mentre una azione di tipo B ha un valore fondamentale <b> stimato </b> <strong>2,80 ECU</strong>.
+  <!-- MERGED: --> Valutando le azioni al loro VF iniziale si ottiene che il portafoglio di ciascun soggetto all'inizio dell'esperimento ammonta
+    a <strong>32,80 ECU</strong> (=3,60*2+2,80*2+10*2=32,80).</p>
+<!--  SEP   Valutando le azioni al loro VF iniziale e dividendo equamente in due il contante disponibile, si ottiene che ciascuno soggetto
+dispone un portafoglio per negoziare nel mercato A pari <strong>17,20
+        ECU</strong> (=3,60*2+10=17,20) e un portafoglio per negoziare nel mercato
+    B pari a <strong>15,60 ECU</strong> (=2.80*2+10=15,60). In totale pertanto
+    32,80 ECU; </p> -->
+
+<p>
+  <!--  MERGED --> In ogni periodo puoi vendere e/o acquistare azioni.
+  <!-- SEP     In ogni periodo puoi vendere e/o acquistare azioni in ciascun mercato ma il
+denaro del portafoglio A non può essere utilizzato per investire nel
+mercato B (e viceversa).-->
+Gli scambi sono effettuati sotto forma di doppia asta, ovvero ogni trader può apparire come acquirente o venditore (ma non potrai mai comprare e vendere a te stesso). Considera che:
+   <ul>1) un ordine può essere  <b>cancellato</b>  </ul>
+   <ul> 2) un ordine può essere   <b>modificato </b>  </ul>
+   <ul> 3) se un ordine è soddisfatto da una controparte sarà eseguito automaticamente (ad esempio se un trader inserisce un ordine di acquisto di 100 e nel book è presente un venditore con un ordine di vendita <b> minore o uguale </b> a 100, l'ordine viene automaticamnete eseguito a 100). </ul>
+
+In particolare, per effettuari gli scambi  hai due opzioni:
+1) <b> selezionare  un'offerta già presente </b> nel mercato con il relativo tasto;
+    2)  inserire una tua offerta utilizzando il tasto ORDINA.
+   <p>
+    </p>
+    NB: In questo ultimo caso, il tuo ordine verrà automaticamente eseguito (se risulta essere il migliore ed è eseguibile),
+    altrimenti il tuo ordine rimane nel mercato fino a quando non viene cancellato.
+    Il tuo portafoglio, azioni e  scorte virtuali di ECU, verrano  trasferiti automaticamente al periodo di trading successivo. Ogni periodo di trading termina automaticamente dopo <b> 180 secondi. </b> </p>
+<p>
+
+
+    Tieni anche presente che i tuoi ECU e l'inventario delle tue azioni non possono mai scendere sotto lo zero. </p>
+
+<p>
+La lista (ossia il <i> book </i>) degli ordini è vuoto all'inizio di ciascun periodo  ed è <b> anonimo, </b>  ovvero <b>l'identità del trader che invia un ordine non viene visualizzata, </b>  siano essi agenti umani o artificiali.
+</p>
+
+
+
+<p style="text-align: justify;">
+
+<h3 style="text-decoration: underline;"> Dividendi </h3>
+
+Alla fine di ogni periodo di trading, ogni azione paga un <b>dividendo </b> (<i>profitto o costo di detenzione</i>) che viene sommato alla tua posizione in ECU:
+<ul style="text-align: justify;">
+
+<li> Il dividendo dell'attività A ammonta a <b>0, 0,1, 0,16 </b> o <b>0,22</b> ECU, con uguale  probabilità di realizzazione. Pertanto, il <b>dividendo medio </b>di un'attività di tipo A ammonta a <b> 0,12 </b> ECU per ogni periodo. L'attività A ha una durata di 15 periodi di negoziazione, ovvero, dopo che i dividendi sono stati pagati alla fine del periodo 15, le attività A vengono riacquistate dallo sperimentatore al prezzo di <b>1,80 </b> ECU ciascuna.
+<p></p>
+
+<li> Il dividendo dell'attività B è pari a <b>0,1, 0,2</b> o <b>0</b> ECU e può comportare <b> costi di detenzione </b> di <b> -0,1 o -0,2 </b> ECU, ciascuno con uguale probabilità di realizzazione. Pertanto, il <b>divdendo medio </b> di un'attività di tipo B ammonta a <b> 0 </b> ECU alla fine di ogni periodo. L'attività B ha una durata di 15 periodi di negoziazione, ovvero, dopo che i dividendi sono stati pagati alla fine del periodo 15, le attività B sono riacquistate dallo sperimentatore ad un prezzo di <b> 2,80 </b> ECU.
+
+</ul>
+
+<!--
+<h3 style="text-decoration: underline;" > Mercato delle azioni </h3>
+<p style="text-align: justify;">
+Se acquisti un' azione, la tua detenzione in ECU verrà diminuita delle rispettive spese (ossia del prezzo di acquisto). Al contrario, se vendi una azione, la tua posizione in ECU verrà aumentata dei rispettivi ricavi (ossia del prezzo di vendita). Il numero di azioni nel tuo portafoglio varierà di conseguenza.
+In ogni momento potrai inserire un ordine di vendita oppure di acquisto. Potrai, anche, se lo vorrai, semplicemente rimpiazzare un precedente ordinare modificandone il prezzo.
+</p>
+
+-->
+
+<h3 style="text-decoration: underline;" > Calcola i tuoi guadagni </h3>
+
+<p style="text-align: justify;">
+Alla fine del mercato (dopo 15 periodi), i tuoi guadagni totali saranno uguali alle tue <b> disponibilità in ECU  </b> in contanti <b> più il valore delle tue azioni </b>. Al termine dell'esperimento, le azioni di tipo A hanno ciascuna un valore 1,80  mentre quelle di tipo B hanno ciascuna un valore 2,80.
+</p>
+
+<p style="text-align: justify;">
+
+Quindi i <b> guadagni totali in ECU </b> alla fine dell'esperimento sono uguali a
+</p>
+ <p style="text-align: center;">
+
+Guadagni = ECU Disponibili + (Num azioni A) * 1,80 + (Num azioni B) * 2,80
+</p>
+
+<p>
+<b> Il numero totale di ECU deve essere tradotto in Euro al seguente tasso: un ECU corrisponde a {{ session.config.real_world_currency_per_point }} Euro </b>
+
+<h3 style="text-decoration: underline;"> Valore Fondamentale (VF) </h3>
+
+<p style="text-align: justify;">
+Per ogni azione, in qualsiasi momento, il valore fondamentale (VF) è fornito dalla seguente formula
+</p>
+
+
+<p style="text-align: center;">
+VF = (15- Periodo attuale + 1) * divendendo medio + Valore Terminale,
+</p>
+<p style="text-align: justify;">
+Le tabelle successive (1) e (2) potrebbero aiutarti a prendere le tue decisioni.
+</p>
+
+<p style="text-align: justify;">
+
+La prima colonna, denominata <i> "Periodo corrente" </i>, indica il periodo durante il quale viene calcolato il VF. La seconda colonna indica il numero di periodi di detenzione, ad es. dal periodo della seconda colonna fino alla fine del mercato (15). La terza colonna, denominata <i>"Dividendo medio" </i>, fornisce l'importo medio del dividendo in ciascun periodo per ciascuna unità detenuta nel tuo portafoglio / inventario. La quarta colonna, etichetta Terminal value, riporta il valore terminale dell'asset, mentre la quinta colonna, etichettata <i> "Valore fondamentale" </i>, fornisce i guadagni totali del dividendo previsti (per asset) per il resto dell'esperimento più il valore terminale al periodo 15. Cioè, per ogni unità che detieni nel tuo inventario per il resto del mercato, ricevi in attesa l'importo elencato nella colonna 5, che è definito come il VF del periodo corrente: il numero nella colonna 5 si calcola moltiplicando i numeri nella colonna 2 e 3 + colonna 4.
+</p>
+
+<p style="text-align: justify;">
+Ad esempio, nella Tabella (1) ottieni il VF per una azione di tipo A. Supponiamo ad esempio che ci siano 4 periodi rimanenti in un mercato. Poiché il dividendo su un'unità di asset prevede un dividendo di 0,12 ECU (per periodo per ciascun asset), se si detiene un asset per i restanti 4 periodi, il dividendo totale pagato sull'unità in 4 periodi è previsto 4 * 0,12 = 0,48 a cui si aggiunge un valore terminale di 1,80. Il VF al periodo 12 è quindi 2,28.
+</p>
+
+<style>
+table { width: 175px; background-color: #FFFFFF; color: #000000; border-color: #000000; border-collapse: collapse; }
+th, td { width: 25px; }
+</style>
+<table border="2" cellspacing="0" cellpadding="0" align="center">
+      <caption style="text-align:right">Tab1</caption>
+<thead>
+<tr>
+<th>Periodo </th>
+<th> Numero periodi detenzione </th>
+<th>x</th>
+<th> Divendo  medio</th>
+<th>+</th>
+<th>Valore Terminale=</th>
+<th>Valore Fondamentale A</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>15</td>
+<td></td>
+<td>0.12</td>
+<td></td>
+<td>1.80</td>
+<td>3.60</td>
+</tr>
+<tr>
+<td>2</td>
+<td>14</td>
+<td></td>
+<td>0.12</td>
+<td></td>
+<td>1.80</td>
+<td>3.48</td>
+</tr>
+<tr>
+<td>3</td>
+<td>13</td>
+<td></td>
+<td>0.12</td>
+<td></td>
+<td>1.80</td>
+<td>3.36</td>
+</tr>
+<tr>
+<td>4</td>
+<td>12</td>
+<td></td>
+<td>0.12</td>
+<td></td>
+<td>1.80</td>
+<td>3.24</td>
+</tr>
+<tr>
+<td>5</td>
+<td>11</td>
+<td></td>
+<td>0.12</td>
+<td></td>
+<td>1.80</td>
+<td>3.12</td>
+</tr>
+<tr>
+<td>6</td>
+<td>10</td>
+<td></td>
+<td>0.12</td>
+<td></td>
+<td>1.80</td>
+<td>3</td>
+</tr>
+<tr>
+<td>7</td>
+<td>9</td>
+<td></td>
+<td>0.12</td>
+<td></td>
+<td>1.80</td>
+<td>2.88</td>
+</tr>
+<tr>
+<td>8</td>
+<td>8</td>
+<td></td>
+<td>0.12</td>
+<td></td>
+<td>1.80</td>
+<td>2.76</td>
+</tr>
+<tr>
+<td>9</td>
+<td>7</td>
+<td></td>
+<td>0.12</td>
+<td></td>
+<td>1.80</td>
+<td>2.64</td>
+</tr>
+<tr>
+<td>10</td>
+<td>6</td>
+<td></td>
+<td>0.12</td>
+<td></td>
+<td>1.80</td>
+<td>2.52</td>
+</tr>
+<tr>
+<td>11</td>
+<td>5</td>
+<td></td>
+<td>0.12</td>
+<td></td>
+<td>1.80</td>
+<td>2.4</td>
+</tr>
+<tr>
+<td>12</td>
+<td>4</td>
+<td></td>
+<td>0.12</td>
+<td></td>
+<td>1.80</td>
+<td>2.28</td>
+</tr>
+<tr>
+<td>13</td>
+<td>3</td>
+<td></td>
+<td>0.12</td>
+<td></td>
+<td>1.80</td>
+<td>2.16</td>
+</tr>
+<tr>
+<td>14</td>
+<td>2</td>
+<td></td>
+<td>0.12</td>
+<td></td>
+<td>1.80</td>
+<td>2.04</td>
+</tr>
+<tr>
+<td>15</td>
+<td>1</td>
+<td></td>
+<td>0.12</td>
+<td></td>
+<td>1.80</td>
+<td>1.92</td>
+</tr>
+
+</tbody>
+</table>
+
+<p> </p>
+
+<table border="2" cellspacing="0" cellpadding="0" align="center">
+    <caption style="text-align:right">Tab2</caption>
+<thead>
+<tr>
+<th>Periodo</th>
+<th>
+<p>Num periodi di</p>
+<p>dentenzione</p>
+</th>
+<th>
+<p>Divdendo</p>
+<p>medio</p>
+</th>
+<th>+</th>
+<th>
+<p>Valore</p>
+<p>Terminale =</p>
+</th>
+<th>
+<p>Valore</p>
+<p>Fondamentale</p>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>15</td>
+<td>0</td>
+<td>&nbsp;</td>
+<td>2.8</td>
+<td>2.8</td>
+</tr>
+<tr>
+<td>2</td>
+<td>14</td>
+<td>0</td>
+<td>&nbsp;</td>
+<td>2.8</td>
+<td>2.8</td>
+</tr>
+<tr>
+<td>3</td>
+<td>13</td>
+<td>0</td>
+<td>&nbsp;</td>
+<td>2.8</td>
+<td>2.8</td>
+</tr>
+<tr>
+<td>4</td>
+<td>12</td>
+<td>0</td>
+<td>&nbsp;</td>
+<td>2.8</td>
+<td>2.8</td>
+</tr>
+<tr>
+<td>5</td>
+<td>11</td>
+<td>0</td>
+<td>&nbsp;</td>
+<td>2.8</td>
+<td>2.8</td>
+</tr>
+<tr>
+<td>6</td>
+<td>10</td>
+<td>0</td>
+<td>&nbsp;</td>
+<td>2.8</td>
+<td>2.8</td>
+</tr>
+<tr>
+<td>7</td>
+<td>9</td>
+<td>0</td>
+<td>&nbsp;</td>
+<td>2.8</td>
+<td>2.8</td>
+</tr>
+<tr>
+<td>8</td>
+<td>8</td>
+<td>0</td>
+<td>&nbsp;</td>
+<td>2.8</td>
+<td>2.8</td>
+</tr>
+<tr>
+<td>9</td>
+<td>7</td>
+<td>0</td>
+<td>&nbsp;</td>
+<td>2.8</td>
+<td>2.8</td>
+</tr>
+<tr>
+<td>10</td>
+<td>6</td>
+<td>0</td>
+<td>&nbsp;</td>
+<td>2.8</td>
+<td>2.8</td>
+</tr>
+<tr>
+<td>11</td>
+<td>5</td>
+<td>0</td>
+<td>&nbsp;</td>
+<td>2.8</td>
+<td>2.8</td>
+</tr>
+<tr>
+<td>12</td>
+<td>4</td>
+<td>0</td>
+<td>&nbsp;</td>
+<td>2.8</td>
+<td>2.8</td>
+</tr>
+<tr>
+<td>13</td>
+<td>3</td>
+<td>0</td>
+<td>&nbsp;</td>
+<td>2.8</td>
+<td>2.8</td>
+</tr>
+<tr>
+<td>14</td>
+<td>2</td>
+<td>0</td>
+<td>&nbsp;</td>
+<td>2.8</td>
+<td>2.8</td>
+</tr>
+<tr>
+<td>15</td>
+<td>1</td>
+<td>0</td>
+<td>&nbsp;</td>
+<td>2.8</td>
+<td>2.8</td>
+</tr>
+</tbody>
+</table>
+
+
+
+</body>
+</html>

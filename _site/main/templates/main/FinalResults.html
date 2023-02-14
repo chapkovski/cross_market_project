@@ -1,0 +1,59 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+
+{% block title %}
+    Risultati finali
+{% endblock %}
+
+{% block content %}
+
+    <table class="table table-stripped table-hover">
+
+        <tbody>
+        <tr>
+            <td>Contante/Saldo</td>
+            <td>{{ player.cash_payoff}}</td>
+        </tr>
+        <tr>
+            <td>Valore terminale A</td>
+            <td>{{ subsession.terminal_A }}</td>
+        </tr>
+        <tr>
+            <td>Azioni A</td>
+            <td>{{ player.shares_A }}</td>
+
+        </tr>
+        <tr>
+            <td>Valore terminale B</td>
+            <td>{{ subsession.terminal_B }}</td>
+        </tr>
+        <tr>
+            <td>Azioni B</td>
+            <td>{{ player.shares_B }}</td>
+
+
+        </tr>
+        <tr class="table-success">
+            <th>Retribuzione finale</th>
+            <th>{{ player.payoff }}</th>
+        </tr>
+        </tbody>
+
+    </table>
+     <div class="card">
+        <div class="card-body">
+            <div class="lead text-center">Il suo codice
+                <div class="text-center"><span class="font-weight-bold display-4">{{ participant.code }}</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+        <b> Per ricevere il premio a scelta inviare una email a caterina.giannetti@unipi.it </b>
+
+        {% next_button %}
+
+{% endblock %}
+
+
