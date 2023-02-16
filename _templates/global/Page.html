@@ -1,8 +1,16 @@
 {% extends "otree/Page.html" %}
 {% load otree static %}
 
-{% block global_styles  %}
+{% block global_styles %}
 {% endblock %}
 
-{% block global_scripts  %}
+{% block internal_scripts %}
+{{ block.super }}
+
+{% if view.page_tracker %}
+<script type="text/javascript" src="{% static 'global/js/page_arrival.js'%}"></script>
+
+
+
+{% endif %}
 {% endblock %}

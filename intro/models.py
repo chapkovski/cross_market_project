@@ -53,7 +53,7 @@ def register_page_arrival(player, data):
         page_name=page_name,
         owner=player.participant
     )
-    print(p)
+    print(f'{p.owner.code} arrived to the page {p.page_name} at {p.server_time}...')
 
 
 class Player(BasePlayer):
