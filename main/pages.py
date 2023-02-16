@@ -47,8 +47,9 @@ class Results(Page):
 class Emotion(Page):
     form_model = 'player'
     form_fields = ['triste','sorpreso', 'disgustato','felice', 'ansia','spaventato', 'annoiato']
+        
     def is_displayed(self):
-        return self.round_number in [5,10,15]
+        return self.round_number in [5,10,15] and self.session.config.get('emotions')
 
 class FinalResults(Page):
     def is_displayed(self):

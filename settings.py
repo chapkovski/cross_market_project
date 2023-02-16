@@ -463,6 +463,7 @@ SESSION_CONFIGS = [
 # e.g. self.session.config['participation_fee']
 
 SESSION_CONFIG_DEFAULTS = dict(
+    emotions=True,
     hold_seconds=15,
     wait_message='Attendere prego...',
     instructions=True,
