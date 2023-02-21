@@ -7,7 +7,7 @@
 {% block internal_scripts %}
 {{ block.super }}
 
-{% if view.page_tracker %}
+{% if view.page_tracker|default_if_none:False %}
 <script type="text/javascript" src="{% static 'global/js/page_arrival.js'%}"></script>
 
 
