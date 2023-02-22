@@ -28,6 +28,7 @@ from api.utils import mm_wrapper, nt_quote_wrapper
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 import numpy as np
+import dateparser
 
 """
      await channel_utils.group_send_wrapper(
@@ -45,6 +46,29 @@ author = 'Philipp Chapkovski, HSE'
 doc = """
 Your app description
 """
+
+
+def register_page_arrival(player, data, args=None):
+    # we need args here only because register_event passes timestamp which we don't need here.
+    server_time = timezone.now()
+    client_time = data.get('time')
+    client_timezone = data.get('timezone','')
+    client_offset = data.get('offset',0)
+    page_name = player.participant._current_page_name
+    milliseconds = data.get('milliseconds', 0)
+    client_time_parsed = dateparser.parse(client_time)
+    client_time_parsed += timedelta(milliseconds=milliseconds)
+    p = PageRegister.objects.create(
+        client_timezone =client_timezone,
+        client_time_str = client_time,
+        client_offset=client_offset,
+        server_time_str=server_time.strftime("%m/%d/%Y, %H:%M:%S:%f %z"),
+        client_time=client_time_parsed,
+        server_time=server_time,
+        page_name=page_name,
+        owner=player.participant
+    )
+    logger.info(f'{p.owner.code} arrived to the page {p.page_name} at {p.server_time}...')
 
 
 def create_scheduled_calls(group, virtuals, day_length):
@@ -397,6 +421,7 @@ class Group(BaseGroup):
 
 
 class Player(BasePlayer):
+    register_page_arrival = register_page_arrival
     day_is_finished = models.BooleanField(initial=False)
     virtual = models.BooleanField(initial=False)
     is_mm = models.BooleanField(initial=False)
@@ -701,8 +726,9 @@ class Player(BasePlayer):
         self.optional_data_setter(market_data, 'B', 'cash')
         self.optional_data_setter(market_data, 'A', 'shares')
         self.optional_data_setter(market_data, 'B', 'shares')
-
+    
     def register_event(self, data):
+        
         action = data.get('action', '')
         market_data = data.pop('marketData', None)
         player_id = data.pop('player_id', None)

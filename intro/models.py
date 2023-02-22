@@ -1,6 +1,6 @@
-from main.models import PageRegister
-import dateparser
-from datetime import datetime, timedelta
+from main.models import register_page_arrival
+
+ 
 from otree.api import (
     models,
     widgets,
@@ -12,7 +12,7 @@ from otree.api import (
     currency_range,
 )
 
-from django.utils import timezone
+ 
 author = 'Your name here'
 
 doc = """
@@ -33,27 +33,6 @@ class Subsession(BaseSubsession):
 class Group(BaseGroup):
     pass
 
-
-def register_page_arrival(player, data):
-    server_time = timezone.now()
-    client_time = data.get('time')
-    client_timezone = data.get('timezone','')
-    client_offset = data.get('offset',0)
-    page_name = player.participant._current_page_name
-    milliseconds = data.get('milliseconds', 0)
-    client_time_parsed = dateparser.parse(client_time)
-    client_time_parsed += timedelta(milliseconds=milliseconds)
-    p = PageRegister.objects.create(
-        client_timezone =client_timezone,
-        client_time_str = client_time,
-        client_offset=client_offset,
-        server_time_str=server_time.strftime("%m/%d/%Y, %H:%M:%S:%f %z"),
-        client_time=client_time_parsed,
-        server_time=server_time,
-        page_name=page_name,
-        owner=player.participant
-    )
-    print(f'{p.owner.code} arrived to the page {p.page_name} at {p.server_time}...')
 
 
 class Player(BasePlayer):
