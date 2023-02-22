@@ -1,7 +1,7 @@
 from otree.api import Currency as c, currency_range
-from ._builtin import Page, WaitPage
+from ._builtin import  WaitPage
 from .models import Constants
-
+from intro.pages import Page
 
 class Q1(Page):
     form_model = 'player'
