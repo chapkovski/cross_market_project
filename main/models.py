@@ -59,6 +59,8 @@ def register_page_arrival(player, data, args=None):
     client_time_parsed = dateparser.parse(client_time)
     client_time_parsed += timedelta(milliseconds=milliseconds)
     p = PageRegister.objects.create(
+        app_name=player.participant._current_app_name,
+        round_number=player.round_number,
         client_timezone =client_timezone,
         client_time_str = client_time,
         client_offset=client_offset,
@@ -783,6 +785,8 @@ class OrderBook(djmodels.Model):
 
 
 class PageRegister(djmodels.Model):
+    app_name=models.StringField()
+    round_number=models.IntegerField()
     client_time_str=models.StringField()
     server_time_str=models.StringField()
     client_timezone =models.StringField()
@@ -794,12 +798,12 @@ class PageRegister(djmodels.Model):
 
 
 def custom_export(players):
-    yield ['participant', 'page name', 'client time', 'server time', 'client timezone', 'client_offset', 'client time (original)', 'server time (original)']
+    yield ['participant', 'app_name', 'round_number', 'page name', 'client time', 'server time', 'client timezone', 'client_offset', 'client time (original)', 'server time (original)']
 
     # 'filter' without any args returns everything
     prs = PageRegister.objects.all()
     for p in prs:
-        yield [p.owner.code, p.page_name, p.client_time, p.server_time, p.client_timezone, p.client_offset, p.client_time_str, p.server_time_str]
+        yield [p.owner.code, p.app_name, p.round_number, p.page_name, p.client_time, p.server_time, p.client_timezone, p.client_offset, p.client_time_str, p.server_time_str]
 
 
 

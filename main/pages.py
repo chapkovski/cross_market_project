@@ -1,7 +1,7 @@
 from otree.api import Currency as c, currency_range
-from ._builtin import Page, WaitPage
+from ._builtin import  WaitPage
 from .models import Constants
-
+from intro.pages import Page
 
 class FirstWP(WaitPage):
     def is_displayed(self):
@@ -25,7 +25,7 @@ class Intro(Page):
 
 class Trade(Page):
     live_method = 'register_event'
-
+    page_tracker=False
     def js_vars(self):
         return dict(status=self.player.current_status())
 
@@ -38,7 +38,6 @@ class ResultsWaitPage(WaitPage):
 
 
 class Results(Page):
-    pass
 
     def get_timeout_seconds(self):
         return self.session.config.get('results_wait_time', 20)

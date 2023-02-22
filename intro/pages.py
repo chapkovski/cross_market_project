@@ -4,13 +4,11 @@ from .models import Constants
 
 
 class Page(oTreePage):
-    page_tracker = False
-
+    page_tracker = True
+    live_method = 'register_page_arrival'
 
 
 class HoldPage(Page):
-    page_tracker = True
-    live_method = 'register_page_arrival'
     def get_timeout_seconds(self):
         return self.session.config.get('hold_seconds', 10)
 
