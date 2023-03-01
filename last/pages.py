@@ -35,7 +35,6 @@ class Results(Page):
     pass
 
 
-
 # page sequence for students
 page_sequence = [Q1, Results]
 
