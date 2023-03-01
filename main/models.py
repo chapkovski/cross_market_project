@@ -28,6 +28,7 @@ from api.utils import mm_wrapper, nt_quote_wrapper
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 import numpy as np
+import dateparser
 
 """
      await channel_utils.group_send_wrapper(
@@ -38,13 +39,38 @@ import numpy as np
 """
 
 # from .matlab_connector import get_mm_bids, get_nt_quote
-VIRTUAL_PREFIX = 'VIRTUAL_'
-MARKET_MAKER_PREFIX = 'MARKET_MAKER'
+VIRTUAL_PREFIX = 'virtual'
+MARKET_MAKER_PREFIX = 'marketmaker'
 author = 'Philipp Chapkovski, HSE'
 
 doc = """
 Your app description
 """
+
+
+def register_page_arrival(player, data, args=None):
+    # we need args here only because register_event passes timestamp which we don't need here.
+    server_time = timezone.now()
+    client_time = data.get('time')
+    client_timezone = data.get('timezone','')
+    client_offset = data.get('offset',0)
+    page_name = player.participant._current_page_name
+    milliseconds = data.get('milliseconds', 0)
+    client_time_parsed = dateparser.parse(client_time)
+    client_time_parsed += timedelta(milliseconds=milliseconds)
+    p = PageRegister.objects.create(
+        app_name=player.participant._current_app_name,
+        round_number=player.round_number,
+        client_timezone =client_timezone,
+        client_time_str = client_time,
+        client_offset=client_offset,
+        server_time_str=server_time.strftime("%m/%d/%Y, %H:%M:%S:%f %z"),
+        client_time=client_time_parsed,
+        server_time=server_time,
+        page_name=page_name,
+        owner=player.participant
+    )
+    logger.info(f'{p.owner.code} arrived to the page {p.page_name} at {p.server_time}...')
 
 
 def create_scheduled_calls(group, virtuals, day_length):
@@ -141,6 +167,7 @@ class Subsession(BaseSubsession):
 
     def creating_session(self):
         c = self.session.config
+        # assert c.get('group_size') == self.session.num_participants, 'Group size should be the same as number participants in session!'
         day_length = c.get('day_length', 300)
         num_virtual_players = c.get('num_virtual_players', 5)
         MAX_CALLS = c.get('max_calls', 5)
@@ -221,7 +248,7 @@ class Group(BaseGroup):
                   '_round_number',
                   '_max_page_index']
         vals = {i: getattr(example_p, i) for i in params}
-        vals['_index_in_pages'] = vals['_max_page_index']
+        vals['_index_in_pages'] = vals['_max_page_index']+1
         num_virtual_players = self.session.config.get('num_virtual_players', 5)
         num_mms = self.session.config.get('num_mms', 1)
 
@@ -253,8 +280,9 @@ class Group(BaseGroup):
                 **vals
             )
             virtual_participants.append(mm)
-        Participant.objects.bulk_create(virtual_participants)
-        virtual_participants = Participant.objects.filter(session=self.session, code__startswith=VIRTUAL_PREFIX)
+        vsparts = Participant.objects.bulk_create(virtual_participants)
+        codes = [i.code for i in vsparts]
+        virtual_participants = Participant.objects.filter(code__in=codes)
         self.session.num_participants += len(virtual_participants)
         self.session.save()
         virtual_players = []
@@ -269,7 +297,7 @@ class Group(BaseGroup):
                 virtual_players.append(pl)
 
         Player.objects.bulk_create(virtual_players)
-
+        
         # ENDO OF BLOCK: creating virtual players
 
     def get_virtual_players(self):
@@ -343,12 +371,16 @@ class Group(BaseGroup):
                     p.shares_B = initial_shares_B
 
         else:
-
+            
             for p in self.get_players():
-                p.cash_A = p.in_round(r).cash_A
-                p.cash_B = p.in_round(r).cash_B
-                p.shares_A = p.in_round(r).shares_A
-                p.shares_B = p.in_round(r).shares_B
+                prev_player= p.in_round(r)
+                # prev_player = p.participant.player_set.filter(round_number=r).first()
+                # print("PREVPLAYER FOUND:", prev_player)
+
+                p.cash_A = prev_player.cash_A
+                p.cash_B = prev_player.cash_B
+                p.shares_A = prev_player.shares_A
+                p.shares_B = prev_player.shares_B
 
         #
         # the following block is not necessary but is convenient to trace virtuals in Data section
@@ -391,6 +423,7 @@ class Group(BaseGroup):
 
 
 class Player(BasePlayer):
+    register_page_arrival = register_page_arrival
     day_is_finished = models.BooleanField(initial=False)
     virtual = models.BooleanField(initial=False)
     is_mm = models.BooleanField(initial=False)
@@ -551,6 +584,7 @@ class Player(BasePlayer):
             return True  # market makers are allowed to do anything they want without budget or shares lims
         if bid_type == 'sell':
             shares = getattr(self, f'shares_{market}')
+            if shares is None: return False
             return shares > 0
         if bid_type == 'buy':
             if self.subsession.merged:
@@ -565,7 +599,7 @@ class Player(BasePlayer):
         transaction_allowed = self.is_transaction_allowed(bid_type, value, market)
         if not transaction_allowed:
             logger.warning(f'TRANSACTION  **NOT** ALLOWED for {self.participant.code}: data: {json.dumps(data)}')
-            return
+            return 
         counterparts = None
         if bid_type == 'sell':
             counterparts = self.group.bids.filter(type='buy', active=True, value__gte=value, market=market).order_by(
@@ -694,8 +728,9 @@ class Player(BasePlayer):
         self.optional_data_setter(market_data, 'B', 'cash')
         self.optional_data_setter(market_data, 'A', 'shares')
         self.optional_data_setter(market_data, 'B', 'shares')
-
+    
     def register_event(self, data):
+        
         action = data.get('action', '')
         market_data = data.pop('marketData', None)
         player_id = data.pop('player_id', None)
@@ -747,6 +782,29 @@ class OrderBook(djmodels.Model):
     initiator = djmodels.ForeignKey(to=Message, on_delete=djmodels.CASCADE, related_name='orders')
     price = models.FloatField()
     type = models.StringField()
+
+
+class PageRegister(djmodels.Model):
+    app_name=models.StringField()
+    round_number=models.IntegerField()
+    client_time_str=models.StringField()
+    server_time_str=models.StringField()
+    client_timezone =models.StringField()
+    client_offset =models.IntegerField()
+    client_time=djmodels.DateTimeField(null=True)
+    server_time=djmodels.DateTimeField(null=True)
+    page_name=models.StringField()
+    owner=djmodels.ForeignKey(to=Participant, on_delete=djmodels.CASCADE, related_name='pregisters')
+
+
+def custom_export(players):
+    yield ['participant', 'app_name', 'round_number', 'page name', 'client time', 'server time', 'client timezone', 'client_offset', 'client time (original)', 'server time (original)']
+
+    # 'filter' without any args returns everything
+    prs = PageRegister.objects.all()
+    for p in prs:
+        yield [p.owner.code, p.app_name, p.round_number, p.page_name, p.client_time, p.server_time, p.client_timezone, p.client_offset, p.client_time_str, p.server_time_str]
+
 
 
 @receiver(post_save, sender=Player)

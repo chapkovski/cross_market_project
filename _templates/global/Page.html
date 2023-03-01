@@ -1,8 +1,23 @@
 {% extends "otree/Page.html" %}
 {% load otree static %}
 
-{% block global_styles  %}
+{% block global_styles %}
 {% endblock %}
 
-{% block global_scripts  %}
+{% block internal_scripts %}
+{{ block.super }}
+
+{% if view.page_tracker|default_if_none:False %}
+<script>
+    function liveRecv(data) {
+        console.log('received a message!', data);
+        // your code goes here
+    }
+</script>
+
+<script type="text/javascript" src="{% static 'global/js/page_arrival.js'%}"></script>
+
+
+
+{% endif %}
 {% endblock %}

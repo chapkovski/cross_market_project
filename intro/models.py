@@ -1,3 +1,6 @@
+from main.models import register_page_arrival
+
+ 
 from otree.api import (
     models,
     widgets,
@@ -9,7 +12,7 @@ from otree.api import (
     currency_range,
 )
 
-
+ 
 author = 'Your name here'
 
 doc = """
@@ -33,7 +36,7 @@ class Group(BaseGroup):
 
 
 class Player(BasePlayer):
-
+    register_page_arrival = register_page_arrival
     question1 = models.IntegerField(
         choices=[[1, "1.80"], [2, "2.80"], [3, "0"]],
         label="A quale prezzo vengono acquistate le azioni di tipo A al termine dell'esperimento?",
@@ -80,7 +83,6 @@ class Player(BasePlayer):
         widget=widgets.RadioSelectHorizontal,
     )
 
-
     corso_studio = models.StringField(
         choices=[
             ["Agraria", "Agraria"],
@@ -102,7 +104,8 @@ class Player(BasePlayer):
         widget=widgets.RadioSelect,
     )
 
-    anni_studio = models.IntegerField(label="Da quanti anni studi all'università?")
+    anni_studio = models.IntegerField(
+        label="Da quanti anni studi all'università?")
     studente = models.StringField(
         blank=False,
         choices=[
@@ -113,4 +116,3 @@ class Player(BasePlayer):
         label="Seleziona l'opzione che ti riguarda",
         widget=widgets.RadioSelect,
     )
-

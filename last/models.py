@@ -8,7 +8,7 @@ from otree.api import (
     Currency as c,
     currency_range,
 )
-
+from main.models import register_page_arrival
 
 author = 'Philipp Chapkovski'
 
@@ -32,6 +32,7 @@ class Group(BaseGroup):
 
 
 class Player(BasePlayer):
+    register_page_arrival = register_page_arrival
     fin1 = models.IntegerField(
         choices=[[1, "più di oggi"], [2, "lo stesso ammontare"], [3, "meno di oggi"], [4, "non so"]],
         label="Immagina di ricevere in regalo 100 Euro. Immagina inoltre di dover attendere 1 anno prima di poter incassare la somma e che l'inflazione sia all'1%. Rispetto ad oggi tra un anno potrai acquistare:",

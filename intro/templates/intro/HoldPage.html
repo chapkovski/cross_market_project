@@ -1,0 +1,72 @@
+{% extends "global/Page.html" %}
+{% load otree static %}
+<!DOCTYPE html>
+<html lang="en">
+
+
+
+{% block global_styles %}
+<title>
+    {{wait_message}}
+</title>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+    integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+<style>
+    body,
+    html {
+        height: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block body_main %}
+<div class="   d-flex flex-column h-100 ">
+    <div class="card flex-grow-1 my-auto d-flex align-items-center flex-column bg-dark h-100">
+        <div class="my-auto text-center text-white">
+            <div class=" ">
+                <div class="d-none">
+                    {% if view.remaining_timeout_seconds != None %}
+                    {% include 'otree/includes/TimeLimit.html' with form_element_id="form" %}
+                    {% endif %}
+                    {% if js_vars|default:False %}
+                    <script>var js_vars = {{ js_vars| json }};</script>{% endif %}
+                    <form class="otree-form" method="post" role="form" id="form" autocomplete="off">{% csrf_token %}
+                        <div class="_otree-content">{% block content %}{% endblock %}</div>
+                    </form>
+                </div>
+                <h1>
+                    {{wait_message}}
+                </h1>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+
+
+{% endblock %}
+
+{% block scripts %}
+{{block.super}}
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+    integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+    crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
+    integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
+    crossorigin="anonymous"></script>
+
+
+
+
+<script id="websocket-redirect" src="{% static 'otree/js/page-websocket-redirect.js' %}"
+    data-socket-url="{{ view.socket_url|safe }}" data-redirect-url="{{ view.redirect_url|safe }}"
+    data-is-debug="{{ view.is_debug|default:"" }}"></script>
+
+{% include 'otree/includes/TimeLimit.js.html' %}
+{% endblock %}

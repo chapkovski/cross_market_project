@@ -11,5 +11,6 @@ django-dotenv
 huey
 redis==3.3.8
 channels-redis
-numpy
+numpy==1.23.1
 scipy
+dateparser
