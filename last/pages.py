@@ -36,7 +36,7 @@ class Results(Page):
 
 
 # page sequence for students
-# page_sequence = [Q1, Results]
+page_sequence = [Q1, Results]
 
 # page_sequence for professionals
-page_sequence = [Results, QProf]
+#page_sequence = [Results, QProf]
