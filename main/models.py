@@ -578,6 +578,8 @@ class Player(BasePlayer):
 
     def is_transaction_allowed(self, bid_type, value, market):
         value = float(value)
+        if value<=0:
+            return False
         if self.day_is_finished:
             return False
         if self.is_mm:
